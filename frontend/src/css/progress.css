@@ -1,0 +1,176 @@
+/* Progress & Results Dashboard */
+.progress-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+@media (max-width: 900px) {
+  .progress-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.overall-progress-card {
+  background: linear-gradient(135deg, #eef2ff, #fae8ff);
+  border: 3px solid #e0e7ff;
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.overall-circle-container {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2);
+  margin: 1.5rem 0;
+  border: 6px solid #6366f1;
+}
+
+.overall-percentage-number {
+  font-size: 2.4rem;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  color: #4338ca;
+}
+
+.overall-percentage-label {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 700;
+}
+
+/* Category Progress Bars */
+.category-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.progress-item-card {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 1rem 1.4rem;
+  border: 2px solid #f1f5f9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.progress-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.progress-item-name {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.progress-item-pct {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #4f46e5;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 14px;
+  background: #f1f5f9;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.fill-alphabet { background: linear-gradient(90deg, #a78bfa, #818cf8); }
+.fill-numbers { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+.fill-colors { background: linear-gradient(90deg, #f472b6, #ec4899); }
+.fill-shapes { background: linear-gradient(90deg, #38bdf8, #0ea5e9); }
+.fill-animals { background: linear-gradient(90deg, #34d399, #10b981); }
+.fill-quiz { background: linear-gradient(90deg, #f43f5e, #e11d48); }
+.fill-games { background: linear-gradient(90deg, #8b5cf6, #6d28d9); }
+
+/* Results Table */
+.results-table-container {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  border: 2px solid #f1f5f9;
+  box-shadow: var(--card-shadow);
+  overflow-x: auto;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.results-table th {
+  padding: 1rem 1.2rem;
+  background: #f8fafc;
+  color: #475569;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.results-table td {
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 1rem;
+}
+
+.results-table tr:hover {
+  background: #f8fafc;
+}
+
+.score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.score-badge.high {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.score-badge.medium {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.score-badge.low {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
