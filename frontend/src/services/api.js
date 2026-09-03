@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "https://kids-little-learners-school.onrender.com/api";
 
 /**
  * Storage helpers for parent auth state
@@ -95,7 +95,7 @@ async function apiRequest(endpoint, options = {}) {
     return data;
   } catch (error) {
     if (error.name === "TypeError" && error.message.includes("fetch")) {
-      throw new Error("Unable to connect to the server. Please make sure the backend is running at http://127.0.0.1:5000.");
+      throw new Error(`Unable to connect to the server. Please make sure the backend is running at ${API_URL}.`);
     }
     throw error;
   }
