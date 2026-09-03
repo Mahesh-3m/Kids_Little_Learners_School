@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Little_Learners
 The main goal of Little Learners is to provide a simple, colorful, and child-friendly platform where schools can manage student information and learning activities while parents can conveniently track their children's educational activities and progress.
 =======
@@ -233,3 +234,7 @@ Kids_Little_Learners/
 - **MySQL Access Denied**: Verify credentials in `backend/.env` match your MySQL root user password.
 - **CORS Issue**: Flask is pre-configured with Flask-CORS to accept requests from `http://localhost:5173`.
 >>>>>>> 6315d93 (Initial commit: Little Learners - Full-stack educational platform)
+=======
+# Kids_Little_Learners
+The main goal of Little Learners is to provide a simple, colorful, and child-friendly platform where schools can manage student information and learning activities while parents can conveniently track their children's educational activities and progress.
+>>>>>>> f54329e52769043b6dde5022914ae1b0f61b00ac
