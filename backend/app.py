@@ -45,10 +45,17 @@ def create_app():
 
     @app.route('/api/health', methods=['GET'])
     def health_check():
+        from database.db import get_active_backend
+        active_db = get_active_backend()
         return jsonify({
             "status": "healthy",
             "app": "Little Learners API",
-            "version": "1.0.0"
+            "version": "1.0.0",
+            "database": {
+                "type": active_db,
+                "host": Config.DB_HOST if active_db == 'mysql' else 'embedded (sqlite)',
+                "database": Config.DB_NAME if active_db == 'mysql' else 'little_learners.db'
+            }
         }), 200
 
     @app.route('/', methods=['GET'])

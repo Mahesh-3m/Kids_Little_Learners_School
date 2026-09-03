@@ -10,6 +10,11 @@ from werkzeug.security import generate_password_hash
 from database.db import get_db_connection, execute_query, fetch_all, fetch_one
 
 def init_parent_tables():
+    from database.db import get_active_backend
+    if get_active_backend() == 'sqlite':
+        print("[DB] SQLite active - Parent tables and accounts initialized.")
+        return
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
