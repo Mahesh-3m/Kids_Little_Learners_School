@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, g
 from werkzeug.security import check_password_hash
 from models.parent import ParentModel
+from models.student import StudentModel
 from routes.auth_middleware import generate_parent_token, parent_required
 
 parents_bp = Blueprint('parents', __name__)
@@ -261,3 +262,50 @@ def get_child_achievements(child_id):
 
     achievements = ParentModel.get_child_achievements(parent_id, child_id)
     return jsonify(achievements), 200
+
+@parents_bp.route('/api/parents/link-child', methods=['POST'])
+@parents_bp.route('/api/parent/link-child', methods=['POST'])
+@parent_required
+def link_child():
+    """Connect an enrolled child to the authenticated parent."""
+    try:
+        data = request.get_json() or {}
+        student_id = data.get('student_id')
+        child_name = data.get('child_name', '').strip()
+        parent_id = g.current_parent['id']
+
+        target_student = None
+
+        if student_id:
+            try:
+                target_student = StudentModel.get_by_id(int(student_id))
+            except (ValueError, TypeError):
+                pass
+        elif child_name:
+            matches = ParentModel.find_matching_students(student_name=child_name)
+            if matches:
+                target_student = StudentModel.get_by_id(matches[0]['id'])
+
+        if not target_student:
+            return jsonify({
+                "error": "Not Found",
+                "message": "No student found matching the provided student ID or name. Please verify with the school office."
+            }), 404
+
+        # Link student to parent
+        ParentModel.link_student(parent_id, target_student['id'])
+        updated_children = ParentModel.get_children(parent_id)
+
+        return jsonify({
+            "status": "success",
+            "message": f"Successfully connected to your child, {target_student['name']}! 🌈",
+            "child": target_student,
+            "children": updated_children
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": "Internal Server Error",
+            "message": f"Failed to connect child: {str(e)}"
+        }), 500
+

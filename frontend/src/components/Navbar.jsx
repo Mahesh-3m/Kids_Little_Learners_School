@@ -4,7 +4,9 @@ import {
   isParentAuthenticated,
   getStoredParent,
   isTeacherAuthenticated,
-  getStoredTeacher
+  getStoredTeacher,
+  isStoreAuthenticated,
+  getStoredStoreManager
 } from '../services/api';
 import '../css/navbar.css';
 
@@ -12,15 +14,19 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [parent, setParent] = useState(getStoredParent());
   const [teacher, setTeacher] = useState(getStoredTeacher());
+  const [manager, setManager] = useState(getStoredStoreManager());
   const [isParentAuth, setIsParentAuth] = useState(isParentAuthenticated());
   const [isTeacherAuth, setIsTeacherAuth] = useState(isTeacherAuthenticated());
+  const [isStoreAuth, setIsStoreAuth] = useState(isStoreAuthenticated());
   const location = useLocation();
 
   useEffect(() => {
     setParent(getStoredParent());
     setTeacher(getStoredTeacher());
+    setManager(getStoredStoreManager());
     setIsParentAuth(isParentAuthenticated());
     setIsTeacherAuth(isTeacherAuthenticated());
+    setIsStoreAuth(isStoreAuthenticated());
   }, [location.pathname]);
 
   const toggleMenu = () => setIsOpen(!isOpen);
@@ -105,6 +111,40 @@ export default function Navbar() {
                   }}
                 >
                   <span>👩‍🏫</span> Teacher
+                </NavLink>
+              </li>
+            )}
+
+            {/* Store Admin Link */}
+            {isStoreAuth ? (
+              <li className="nav-item">
+                <NavLink 
+                  to="/store-admin/dashboard" 
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                  onClick={closeMenu}
+                  style={{
+                    background: '#ccfbf1',
+                    color: '#0f766e',
+                    fontWeight: 700,
+                    border: '1.5px solid #99f6e4'
+                  }}
+                >
+                  <span>🏬</span> Store Admin
+                </NavLink>
+              </li>
+            ) : (
+              <li className="nav-item">
+                <NavLink 
+                  to="/store-admin/login" 
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                  onClick={closeMenu}
+                  style={{
+                    background: '#f0fdfa',
+                    color: '#0f766e',
+                    border: '1.5px solid #ccfbf1'
+                  }}
+                >
+                  <span>🏬</span> Store
                 </NavLink>
               </li>
             )}

@@ -220,6 +220,35 @@ def init_sqlite_db():
             );
         """)
 
+        # 13. Store Managers Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS store_managers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        # 14. Toy Selections Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS toy_selections (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                parent_id INTEGER NOT NULL,
+                student_id INTEGER NOT NULL,
+                product_id INTEGER NOT NULL,
+                student_name TEXT NOT NULL,
+                student_class TEXT NOT NULL,
+                product_name TEXT NOT NULL,
+                product_category TEXT NOT NULL,
+                quantity INTEGER NOT NULL DEFAULT 1,
+                price REAL NOT NULL,
+                status TEXT NOT NULL DEFAULT 'Requested',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
         conn.commit()
 
         # Check if database has been seeded

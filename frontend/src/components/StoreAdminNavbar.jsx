@@ -1,31 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
-import { getStoredTeacher, logoutTeacher } from '../services/api';
+import { getStoredStoreManager, logoutStoreManager } from '../services/api';
 import '../css/navbar.css';
 
-export default function TeacherNavbar() {
+export default function StoreAdminNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [teacher, setTeacher] = useState(getStoredTeacher());
+  const [manager, setManager] = useState(getStoredStoreManager());
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    setTeacher(getStoredTeacher());
+    setManager(getStoredStoreManager());
   }, [location.pathname]);
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
 
   const handleLogout = () => {
-    logoutTeacher();
-    navigate('/teacher/login');
+    logoutStoreManager();
+    navigate('/store-admin/login');
   };
 
   return (
-    <header className="navbar" style={{ borderBottom: '2px solid #fed7aa', background: '#fffaf5' }}>
+    <header className="navbar" style={{ borderBottom: '2px solid #cbd5e1', background: '#f8fafc' }}>
       <div className="navbar-container">
         {/* Brand */}
-        <Link to="/teacher/dashboard" className="nav-brand" onClick={closeMenu}>
+        <Link to="/store-admin/dashboard" className="nav-brand" onClick={closeMenu}>
           <img src="/logo.png" alt="Little Learners Logo" className="brand-logo-img" style={{ height: '44px', width: 'auto' }} />
           <div>
             <div className="brand-text" style={{ fontSize: '1.25rem', lineHeight: 1.1 }}>
@@ -35,14 +35,14 @@ export default function TeacherNavbar() {
               style={{
                 fontSize: '0.72rem',
                 fontWeight: 700,
-                color: '#ea580c',
-                background: '#ffedd5',
+                color: '#0f766e',
+                background: '#ccfbf1',
                 padding: '0.15rem 0.5rem',
                 borderRadius: '9999px',
                 display: 'inline-block'
               }}
             >
-              Teacher Portal
+              🏬 Store Admin
             </span>
           </div>
         </Link>
@@ -51,7 +51,7 @@ export default function TeacherNavbar() {
         <button
           className="mobile-toggle"
           onClick={toggleMenu}
-          aria-label="Toggle Teacher Menu"
+          aria-label="Toggle Store Admin Menu"
         >
           {isOpen ? '✕' : '☰'}
         </button>
@@ -61,7 +61,7 @@ export default function TeacherNavbar() {
           <ul className={`nav-links ${isOpen ? 'open' : ''}`}>
             <li className="nav-item">
               <NavLink
-                to="/teacher/dashboard"
+                to="/store-admin/dashboard"
                 className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                 onClick={closeMenu}
                 end
@@ -71,78 +71,45 @@ export default function TeacherNavbar() {
             </li>
             <li className="nav-item">
               <NavLink
-                to="/teacher/students"
+                to="/store-admin/products"
                 className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                 onClick={closeMenu}
               >
-                <span>🎒</span> Manage Students
+                <span>📦</span> Inventory & Catalog
               </NavLink>
             </li>
             <li className="nav-item">
               <NavLink
-                to="/teacher/students/add"
+                to="/store-admin/add-product"
                 className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                 onClick={closeMenu}
               >
-                <span>➕</span> Enroll Student
+                <span>➕</span> Add Product
               </NavLink>
             </li>
             <li className="nav-item">
               <NavLink
-                to="/classes"
+                to="/store-admin/toy-selections"
                 className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                 onClick={closeMenu}
               >
-                <span>🏫</span> Classes
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink
-                to="/progress"
-                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                onClick={closeMenu}
-              >
-                <span>📈</span> Progress
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink
-                to="/results"
-                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                onClick={closeMenu}
-              >
-                <span>🏆</span> Results
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink
-                to="/store-admin/dashboard"
-                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                onClick={closeMenu}
-                style={{
-                  background: '#ccfbf1',
-                  color: '#0f766e',
-                  fontWeight: 700,
-                  border: '1.5px solid #99f6e4'
-                }}
-              >
-                <span>🏬</span> Store Manager
+                <span>🎁</span> Kid Toy Requests
               </NavLink>
             </li>
 
-            {/* Teacher info & controls */}
+            {/* Manager info & controls */}
             <li className="nav-item" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginLeft: '0.5rem' }}>
               <span
                 style={{
-                  background: '#fef3c7',
-                  color: '#92400e',
+                  background: '#e0f2fe',
+                  color: '#0369a1',
                   padding: '0.35rem 0.75rem',
                   borderRadius: '9999px',
                   fontSize: '0.85rem',
                   fontWeight: 700
                 }}
               >
-                👩‍🏫 {teacher ? teacher.name.split(' ')[0] : 'Teacher'}
+                🏬 {manager ? manager.name.split(' ')[0] : 'Manager'}
               </span>
 
               <Link
@@ -166,7 +133,7 @@ export default function TeacherNavbar() {
                   fontSize: '0.85rem',
                   fontWeight: 700
                 }}
-                title="Sign out of Teacher Portal"
+                title="Sign out of Store Admin"
               >
                 🚪 Sign Out
               </button>

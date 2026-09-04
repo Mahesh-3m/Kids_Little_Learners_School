@@ -81,6 +81,39 @@ export function isTeacherAuthenticated() {
 }
 
 /**
+ * Storage helpers for Store Manager auth state
+ */
+export const STORE_TOKEN_KEY = "ll_store_token";
+export const STORE_USER_KEY = "ll_store_manager";
+
+export function getStoreToken() {
+  return localStorage.getItem(STORE_TOKEN_KEY);
+}
+
+export function getStoredStoreManager() {
+  const data = localStorage.getItem(STORE_USER_KEY);
+  try {
+    return data ? JSON.parse(data) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+export function setStoreAuth(token, managerUser) {
+  if (token) localStorage.setItem(STORE_TOKEN_KEY, token);
+  if (managerUser) localStorage.setItem(STORE_USER_KEY, JSON.stringify(managerUser));
+}
+
+export function removeStoreAuth() {
+  localStorage.removeItem(STORE_TOKEN_KEY);
+  localStorage.removeItem(STORE_USER_KEY);
+}
+
+export function isStoreAuthenticated() {
+  return Boolean(getStoreToken());
+}
+
+/**
  * Generic request helper with robust error handling and role-aware token attachment
  */
 async function apiRequest(endpoint, options = {}) {
@@ -93,15 +126,21 @@ async function apiRequest(endpoint, options = {}) {
   if (!options.headers || !options.headers["Authorization"]) {
     const teacherToken = getTeacherToken();
     const parentToken = getParentToken();
+    const storeToken = getStoreToken();
 
-    if (endpoint.startsWith("/teacher") || endpoint.startsWith("/students")) {
-      const token = teacherToken || parentToken;
+    if (endpoint.startsWith("/store/admin") || endpoint.startsWith("/store/profile")) {
+      const sToken = storeToken || teacherToken;
+      if (sToken) defaultHeaders["Authorization"] = `Bearer ${sToken}`;
+    } else if (endpoint.startsWith("/store/products") || endpoint.startsWith("/store/select") || endpoint.startsWith("/store/my-selections")) {
+      if (parentToken) defaultHeaders["Authorization"] = `Bearer ${parentToken}`;
+    } else if (endpoint.startsWith("/teacher") || endpoint.startsWith("/students")) {
+      const token = teacherToken;
       if (token) defaultHeaders["Authorization"] = `Bearer ${token}`;
-    } else if (endpoint.startsWith("/store") || endpoint.startsWith("/parent") || endpoint.startsWith("/parents")) {
-      const token = parentToken || teacherToken;
+    } else if (endpoint.startsWith("/parent") || endpoint.startsWith("/parents")) {
+      const token = parentToken;
       if (token) defaultHeaders["Authorization"] = `Bearer ${token}`;
     } else {
-      const token = teacherToken || parentToken;
+      const token = teacherToken || parentToken || storeToken;
       if (token) defaultHeaders["Authorization"] = `Bearer ${token}`;
     }
   }
@@ -393,8 +432,15 @@ export async function getChildAchievements(childId) {
   return apiRequest(`/parents/children/${childId}/achievements`);
 }
 
+export async function linkChildToParent(data) {
+  return apiRequest('/parents/link-child', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 // ----------------------------------------------------
-// KIDS STORE APIs (Parent Only)
+// KIDS STORE APIs (Parent View)
 // ----------------------------------------------------
 export async function getStoreProducts(category = "") {
   const params = new URLSearchParams();
@@ -407,6 +453,113 @@ export async function getStoreProducts(category = "") {
 
 export async function getStoreProduct(id) {
   return apiRequest(`/store/products/${id}`);
+}
+
+export async function getStoreCategories() {
+  return apiRequest("/store/categories");
+}
+
+// ----------------------------------------------------
+// PARENT TOY SELECTION APIs
+// ----------------------------------------------------
+export async function selectStoreProductForChild({ student_id, product_id, quantity = 1 }) {
+  return apiRequest("/store/select", {
+    method: "POST",
+    body: JSON.stringify({ student_id, product_id, quantity }),
+  });
+}
+
+export async function getMyToySelections() {
+  return apiRequest("/store/my-selections");
+}
+
+// ----------------------------------------------------
+// STORE MANAGER AUTH & MANAGEMENT APIs
+// ----------------------------------------------------
+export async function storeManagerLogin(credentials) {
+  const data = await apiRequest("/store/login", {
+    method: "POST",
+    body: JSON.stringify(credentials),
+  });
+  if (data && data.token) {
+    setStoreAuth(data.token, data.manager);
+  }
+  return data;
+}
+
+export async function getStoreManagerProfile() {
+  return apiRequest("/store/profile");
+}
+
+export function logoutStoreManager() {
+  removeStoreAuth();
+}
+
+export async function adminGetStoreStats() {
+  return apiRequest("/store/admin/stats");
+}
+
+export async function adminGetProducts(category = "") {
+  const params = new URLSearchParams();
+  if (category && category.toLowerCase() !== "all") {
+    params.append("category", category);
+  }
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return apiRequest(`/store/admin/products${query}`);
+}
+
+export async function adminGetProduct(id) {
+  return apiRequest(`/store/admin/products/${id}`);
+}
+
+export async function adminAddProduct(productData) {
+  return apiRequest("/store/admin/products", {
+    method: "POST",
+    body: JSON.stringify(productData),
+  });
+}
+
+export async function adminUpdateProduct(id, productData) {
+  return apiRequest(`/store/admin/products/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(productData),
+  });
+}
+
+export async function adminUpdateStock(id, stock) {
+  return apiRequest(`/store/admin/products/${id}/stock`, {
+    method: "PATCH",
+    body: JSON.stringify({ stock }),
+  });
+}
+
+export async function adminUpdatePrice(id, price) {
+  return apiRequest(`/store/admin/products/${id}/price`, {
+    method: "PATCH",
+    body: JSON.stringify({ price }),
+  });
+}
+
+export async function adminDeleteProduct(id) {
+  return apiRequest(`/store/admin/products/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function adminGetToySelections(category = "") {
+  const params = new URLSearchParams();
+  if (category && category.toLowerCase() !== "all") {
+    params.append("category", category);
+  }
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return apiRequest(`/store/admin/toy-selections${query}`);
+}
+
+export async function adminUpdateSelectionStatus(id, status) {
+  return apiRequest(`/store/admin/toy-selections/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
 }
 
 export default {
@@ -457,6 +610,7 @@ export default {
   getChildResults,
   getChildProgress,
   getChildAchievements,
+  linkChildToParent,
   getParentToken,
   getStoredParent,
   setParentAuth,
@@ -467,4 +621,26 @@ export default {
   // Kids Store APIs
   getStoreProducts,
   getStoreProduct,
+  getStoreCategories,
+  selectStoreProductForChild,
+  getMyToySelections,
+  // Store Manager APIs
+  getStoreToken,
+  getStoredStoreManager,
+  setStoreAuth,
+  removeStoreAuth,
+  isStoreAuthenticated,
+  storeManagerLogin,
+  getStoreManagerProfile,
+  logoutStoreManager,
+  adminGetStoreStats,
+  adminGetProducts,
+  adminGetProduct,
+  adminAddProduct,
+  adminUpdateProduct,
+  adminUpdateStock,
+  adminUpdatePrice,
+  adminDeleteProduct,
+  adminGetToySelections,
+  adminUpdateSelectionStatus,
 };

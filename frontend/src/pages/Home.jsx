@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getClasses, isTeacherAuthenticated, isParentAuthenticated } from '../services/api';
+import {
+  getClasses,
+  isTeacherAuthenticated,
+  isParentAuthenticated,
+  isStoreAuthenticated
+} from '../services/api';
 
 export default function Home() {
   const [stats, setStats] = useState({
@@ -15,6 +20,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const isTeacher = isTeacherAuthenticated();
   const isParent = isParentAuthenticated();
+  const isStore = isStoreAuthenticated();
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -156,6 +162,19 @@ export default function Home() {
             className="btn btn-parent-cta btn-lg"
           >
             <span>👨‍👩‍👧</span> {isParent ? 'Parent Dashboard' : 'Parent Sign In'}
+          </Link>
+          <Link
+            to={isStore ? "/store-admin/dashboard" : "/store-admin/login"}
+            className="btn btn-lg"
+            style={{
+              background: 'linear-gradient(135deg, #0f766e, #0d9488)',
+              color: '#ffffff',
+              border: 'none',
+              fontWeight: 700,
+              boxShadow: '0 4px 12px rgba(15, 118, 110, 0.25)'
+            }}
+          >
+            <span>🏬</span> {isStore ? 'Store Dashboard' : 'Store Admin'}
           </Link>
         </div>
 
@@ -496,6 +515,48 @@ export default function Home() {
               </p>
               <Link to={isParent ? "/parent/dashboard" : "/parent/login"} className="btn-parent-nav-signin btn-sm">
                 <span>👨‍👩‍👧</span> {isParent ? 'Parent Dashboard ➔' : 'Parent Sign In ➔'}
+              </Link>
+            </div>
+          </div>
+
+          {/* For Store Managers (Role 4) */}
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: 'var(--radius-md)',
+                background: '#ccfbf1',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '2rem',
+                flexShrink: 0
+              }}
+            >
+              🏬
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1.25rem', color: '#1e293b', marginBottom: '0.4rem' }}>
+                For Store Managers
+              </h3>
+              <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '0.75rem' }}>
+                Dedicated inventory and pricing administration to catalog educational supplies and fulfill student toy selections with strict student privacy.
+              </p>
+              <Link
+                to={isStore ? "/store-admin/dashboard" : "/store-admin/login"}
+                className="btn btn-sm"
+                style={{
+                  background: 'linear-gradient(135deg, #0f766e, #0d9488)',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '9999px',
+                  display: 'inline-block'
+                }}
+              >
+                <span>🏬</span> {isStore ? 'Store Dashboard ➔' : 'Store Admin Sign In ➔'}
               </Link>
             </div>
           </div>

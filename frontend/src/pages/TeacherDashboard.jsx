@@ -55,9 +55,24 @@ export default function TeacherDashboard() {
             Manage student academic portfolios, track class allocations across Nursery, LKG, and UKG, and oversee learning progress.
           </p>
         </div>
-        <div>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <Link to="/teacher/students/add" className="btn btn-primary" style={{ background: '#ea580c', borderColor: '#ea580c' }}>
             ➕ Enroll New Student
+          </Link>
+          <Link
+            to="/store-admin/dashboard"
+            className="btn"
+            style={{
+              background: '#0f766e',
+              color: '#ffffff',
+              border: 'none',
+              fontWeight: 700,
+              padding: '0.65rem 1.1rem',
+              borderRadius: 'var(--radius-md)',
+              textDecoration: 'none'
+            }}
+          >
+            🏬 Store Manager Portal
           </Link>
         </div>
       </div>
@@ -214,6 +229,27 @@ export default function TeacherDashboard() {
             <div>
               <h3 style={{ fontSize: '1.1rem', color: '#1e293b', margin: 0 }}>Subject Mastery</h3>
               <p style={{ fontSize: '0.88rem', color: '#64748b', margin: '0.2rem 0 0' }}>Overall curriculum analytics</p>
+            </div>
+          </Link>
+
+          <Link
+            to="/store-admin/dashboard"
+            className="card"
+            style={{
+              padding: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              textDecoration: 'none',
+              transition: 'transform 0.2s ease',
+              border: '2px solid #99f6e4',
+              background: '#f0fdfa'
+            }}
+          >
+            <span style={{ fontSize: '2.2rem' }}>🏬</span>
+            <div>
+              <h3 style={{ fontSize: '1.1rem', color: '#0f766e', margin: 0 }}>School Store Admin</h3>
+              <p style={{ fontSize: '0.88rem', color: '#115e59', margin: '0.2rem 0 0' }}>Manage store & fulfill toy requests</p>
             </div>
           </Link>
         </div>

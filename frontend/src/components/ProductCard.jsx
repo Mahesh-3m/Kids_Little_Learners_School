@@ -8,7 +8,7 @@ const CATEGORY_ICONS = {
   dresses: '👕',
 };
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, onSelect }) {
   const [imgError, setImgError] = useState(false);
 
   if (!product) return null;
@@ -55,13 +55,28 @@ export default function ProductCard({ product }) {
           </div>
         </div>
 
-        <div style={{ marginTop: '0.9rem' }}>
+        <div style={{ marginTop: '0.9rem', display: 'flex', gap: '0.5rem' }}>
+          <button
+            onClick={() => onSelect && onSelect(product)}
+            disabled={isOutOfStock}
+            className="btn btn-sm btn-primary"
+            style={{
+              flex: 1,
+              fontSize: '0.85rem',
+              padding: '0.45rem 0.6rem',
+              background: isOutOfStock ? '#cbd5e1' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              borderColor: isOutOfStock ? '#cbd5e1' : '#6366f1',
+              cursor: isOutOfStock ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {isOutOfStock ? 'Out of Stock' : '🎁 Select for Child'}
+          </button>
           <Link
             to={`/parent/store/product/${product.id}`}
             className="btn btn-sm btn-outline"
-            style={{ width: '100%', fontSize: '0.88rem' }}
+            style={{ fontSize: '0.85rem', padding: '0.45rem 0.7rem' }}
           >
-            View Details 🔍
+            Details 🔍
           </Link>
         </div>
       </div>
