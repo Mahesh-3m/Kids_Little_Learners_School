@@ -56,7 +56,7 @@ export default function ParentNavbar() {
         {/* Brand */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <Link to="/parent/dashboard" className="parent-brand">
-            <span style={{ fontSize: '1.8rem' }}>👨‍👩‍👧</span>
+            <img src="/logo.png" alt="Little Learners Logo" className="brand-logo-img" style={{ height: '44px', width: 'auto' }} />
             <div>
               <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 800, color: '#1e293b', lineHeight: 1.1 }}>
                 Little Learners
@@ -116,6 +116,15 @@ export default function ParentNavbar() {
                 className={({ isActive }) => `parent-nav-link ${isActive ? 'active' : ''}`}
               >
                 <span>📊</span> Progress
+              </NavLink>
+            </li>
+            <li>
+              <NavLink 
+                to="/parent/store" 
+                className={({ isActive }) => `parent-nav-link ${isActive ? 'active' : ''}`}
+                style={({ isActive }) => isActive ? { background: '#fef3c7', color: '#b45309', border: '1.5px solid #fde68a' } : {}}
+              >
+                <span>🛍️</span> Kids Store
               </NavLink>
             </li>
             <li>

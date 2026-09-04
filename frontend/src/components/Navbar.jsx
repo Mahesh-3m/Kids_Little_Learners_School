@@ -1,39 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { isParentAuthenticated, getStoredParent, logoutParent } from '../services/api';
+import {
+  isParentAuthenticated,
+  getStoredParent,
+  isTeacherAuthenticated,
+  getStoredTeacher
+} from '../services/api';
 import '../css/navbar.css';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [parent, setParent] = useState(getStoredParent());
-  const [isAuthenticated, setIsAuthenticated] = useState(isParentAuthenticated());
+  const [teacher, setTeacher] = useState(getStoredTeacher());
+  const [isParentAuth, setIsParentAuth] = useState(isParentAuthenticated());
+  const [isTeacherAuth, setIsTeacherAuth] = useState(isTeacherAuthenticated());
   const location = useLocation();
 
   useEffect(() => {
     setParent(getStoredParent());
-    setIsAuthenticated(isParentAuthenticated());
+    setTeacher(getStoredTeacher());
+    setIsParentAuth(isParentAuthenticated());
+    setIsTeacherAuth(isTeacherAuthenticated());
   }, [location.pathname]);
 
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const closeMenu = () => {
-    setIsOpen(false);
-  };
-
-  const handleLogout = () => {
-    logoutParent();
-    setIsAuthenticated(false);
-    setParent(null);
-    closeMenu();
-  };
+  const toggleMenu = () => setIsOpen(!isOpen);
+  const closeMenu = () => setIsOpen(false);
 
   return (
     <header className="navbar">
       <div className="navbar-container">
         <Link to="/" className="nav-brand" onClick={closeMenu}>
-          <span className="brand-icon">🌈</span>
+          <img src="/logo.png" alt="Little Learners Logo" className="brand-logo-img" />
           <span className="brand-text">Little Learners</span>
         </Link>
 
@@ -50,11 +47,6 @@ export default function Navbar() {
             <li className="nav-item">
               <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={closeMenu} end>
                 <span>🏠</span> Home
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink to="/students" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={closeMenu}>
-                <span>👩‍🏫</span> Students
               </NavLink>
             </li>
             <li className="nav-item">
@@ -83,9 +75,43 @@ export default function Navbar() {
               </NavLink>
             </li>
 
+            {/* Teacher Link / Portal */}
+            {isTeacherAuth ? (
+              <li className="nav-item">
+                <NavLink 
+                  to="/teacher/dashboard" 
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                  onClick={closeMenu}
+                  style={{
+                    background: '#ffedd5',
+                    color: '#c2410c',
+                    fontWeight: 700,
+                    border: '1.5px solid #fed7aa'
+                  }}
+                >
+                  <span>👩‍🏫</span> {teacher ? teacher.name.split(' ')[0] : 'Teacher'} Portal
+                </NavLink>
+              </li>
+            ) : (
+              <li className="nav-item">
+                <NavLink 
+                  to="/teacher/login" 
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                  onClick={closeMenu}
+                  style={{
+                    background: '#fff7ed',
+                    color: '#c2410c',
+                    border: '1.5px solid #ffedd5'
+                  }}
+                >
+                  <span>👩‍🏫</span> Teacher
+                </NavLink>
+              </li>
+            )}
+
             {/* Auth / Parent Portal Nav Buttons */}
-            {isAuthenticated ? (
-              <li className="nav-item" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            {isParentAuth ? (
+              <li className="nav-item">
                 <NavLink 
                   to="/parent/dashboard" 
                   className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
@@ -97,7 +123,7 @@ export default function Navbar() {
                     border: '1.5px solid #d8b4fe'
                   }}
                 >
-                  <span>👨‍👩‍👧</span> {parent ? parent.name.split(' ')[0] : 'Portal'}
+                  <span>👨‍👩‍👧</span> {parent ? parent.name.split(' ')[0] : 'Parent'} Portal
                 </NavLink>
               </li>
             ) : (
@@ -105,15 +131,11 @@ export default function Navbar() {
                 <li className="nav-item">
                   <NavLink 
                     to="/login" 
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} 
+                    className="btn-parent-nav-signin" 
                     onClick={closeMenu}
-                    style={{
-                      background: '#f8fafc',
-                      color: '#475569',
-                      border: '1.5px solid #cbd5e1'
-                    }}
+                    title="Sign in to Parent Portal"
                   >
-                    <span>🔑</span> Sign In
+                    <span>👨‍👩‍👧</span> Parent Sign In
                   </NavLink>
                 </li>
                 <li className="nav-item">

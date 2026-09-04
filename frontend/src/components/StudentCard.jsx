@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-export default function StudentCard({ student, onDelete }) {
+export default function StudentCard({ student, onDelete, basePath = '/teacher/students' }) {
   const isFemale = student.gender && student.gender.toLowerCase() === 'female';
   const avatarEmoji = isFemale ? '👧' : '👦';
 
@@ -57,10 +57,10 @@ export default function StudentCard({ student, onDelete }) {
       </div>
 
       <div className="student-card-actions">
-        <Link to={`/students/${student.id}`} className="btn btn-outline btn-sm" title="View Student Details">
+        <Link to={`${basePath}/${student.id}`} className="btn btn-outline btn-sm" title="View Student Details">
           👁️ View
         </Link>
-        <Link to={`/students/edit/${student.id}`} className="btn btn-warning btn-sm" title="Edit Student">
+        <Link to={`${basePath}/edit/${student.id}`} className="btn btn-warning btn-sm" title="Edit Student">
           ✏️ Edit
         </Link>
         <button 

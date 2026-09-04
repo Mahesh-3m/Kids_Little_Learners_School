@@ -21,12 +21,25 @@ def test_api():
     assert res.status_code == 200, f"Health check failed: {res.status_code}"
     print("[PASS] /api/health passed")
 
-    # 2. Get Students
+    # 2. Verify Student Security & Obtain Teacher Token
     res = client.get('/api/students')
+    assert res.status_code == 401, f"Security check failed: unauthenticated /api/students should return 401, got {res.status_code}"
+    print("[PASS] Unauthenticated /api/students securely rejected (401)")
+
+    # Login / Register teacher
+    teacher_email = "teacher_test@littlelearners.com"
+    t_res = client.post('/api/teacher/login', json={'email': teacher_email, 'password': 'password123'})
+    if t_res.status_code != 200:
+        t_res = client.post('/api/teacher/register', json={'name': 'Teacher Test', 'email': teacher_email, 'password': 'password123'})
+    teacher_token = t_res.get_json()['token']
+    teacher_headers = {'Authorization': f'Bearer {teacher_token}'}
+
+    # Get Students with Teacher Token
+    res = client.get('/api/students', headers=teacher_headers)
     assert res.status_code == 200, f"Get students failed: {res.status_code}"
     students = json.loads(res.data)
     assert len(students) > 0, "No students returned"
-    print(f"[PASS] /api/students passed ({len(students)} students found)")
+    print(f"[PASS] /api/students passed with teacher auth ({len(students)} students found)")
 
     # 3. Add Student (POST)
     new_student_data = {
@@ -38,14 +51,14 @@ def test_api():
         "phone": "9998887776",
         "address": "123 Rainbow Street"
     }
-    res = client.post('/api/students', json=new_student_data)
+    res = client.post('/api/students', headers=teacher_headers, json=new_student_data)
     assert res.status_code == 201, f"Create student failed: {res.status_code}, {res.data}"
     created_student = json.loads(res.data)
     created_id = created_student['id']
     print(f"[PASS] POST /api/students passed (Created ID: {created_id})")
 
     # 4. Get Single Student (GET)
-    res = client.get(f'/api/students/{created_id}')
+    res = client.get(f'/api/students/{created_id}', headers=teacher_headers)
     assert res.status_code == 200, f"Get student by ID failed: {res.status_code}"
     print(f"[PASS] GET /api/students/{created_id} passed")
 
@@ -53,7 +66,7 @@ def test_api():
     update_data = dict(new_student_data)
     update_data['name'] = "Test Little Champ Updated"
     update_data['class_name'] = "LKG"
-    res = client.put(f'/api/students/{created_id}', json=update_data)
+    res = client.put(f'/api/students/{created_id}', headers=teacher_headers, json=update_data)
     assert res.status_code == 200, f"Update student failed: {res.status_code}"
     updated = json.loads(res.data)
     assert updated['name'] == "Test Little Champ Updated"
@@ -61,7 +74,7 @@ def test_api():
     print(f"[PASS] PUT /api/students/{created_id} passed")
 
     # 6. Delete Student (DELETE)
-    res = client.delete(f'/api/students/{created_id}')
+    res = client.delete(f'/api/students/{created_id}', headers=teacher_headers)
     assert res.status_code == 200, f"Delete student failed: {res.status_code}"
     print(f"[PASS] DELETE /api/students/{created_id} passed")
 

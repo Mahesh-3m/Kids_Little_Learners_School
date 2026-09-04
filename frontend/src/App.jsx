@@ -4,20 +4,26 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 // Layout Components
 import Navbar from './components/Navbar';
 import ParentNavbar from './components/ParentNavbar';
+import TeacherNavbar from './components/TeacherNavbar';
 import Footer from './components/Footer';
 import ParentProtectedRoute from './components/ParentProtectedRoute';
+import TeacherProtectedRoute from './components/TeacherProtectedRoute';
 
-// Admin / Public Pages
+// Public & School Learning Pages
 import Home from './pages/Home';
-import Students from './pages/Students';
-import AddStudent from './pages/AddStudent';
-import EditStudent from './pages/EditStudent';
-import StudentDetails from './pages/StudentDetails';
 import Classes from './pages/Classes';
 import Games from './pages/Games';
 import Quiz from './pages/Quiz';
 import Results from './pages/Results';
 import Progress from './pages/Progress';
+
+// Teacher Pages
+import TeacherLogin from './pages/TeacherLogin';
+import TeacherDashboard from './pages/TeacherDashboard';
+import TeacherStudents from './pages/TeacherStudents';
+import AddStudent from './pages/AddStudent';
+import EditStudent from './pages/EditStudent';
+import StudentDetails from './pages/StudentDetails';
 
 // Parent & Auth Pages
 import ParentLogin from './pages/ParentLogin';
@@ -31,14 +37,28 @@ import ParentProgress from './pages/ParentProgress';
 import ParentAchievements from './pages/ParentAchievements';
 import ParentProfile from './pages/ParentProfile';
 
+// Kids Store Pages (Parent Only)
+import KidsStore from './pages/KidsStore';
+import Books from './pages/Books';
+import Stationery from './pages/Stationery';
+import Toys from './pages/Toys';
+import KidsDresses from './pages/KidsDresses';
+import ProductDetails from './pages/ProductDetails';
+
 // Global Styles
 import './css/global.css';
 
 function DynamicNavbar() {
   const location = useLocation();
-  const authRoutes = ['/parent/login', '/parent/register', '/login', '/register'];
-  const isParentSection = location.pathname.startsWith('/parent') && !authRoutes.includes(location.pathname);
-  
+  const parentAuthRoutes = ['/parent/login', '/parent/register', '/login', '/register'];
+  const teacherAuthRoutes = ['/teacher/login', '/teacher/register'];
+
+  const isTeacherSection = location.pathname.startsWith('/teacher') && !teacherAuthRoutes.includes(location.pathname);
+  const isParentSection = location.pathname.startsWith('/parent') && !parentAuthRoutes.includes(location.pathname);
+
+  if (isTeacherSection) {
+    return <TeacherNavbar />;
+  }
   if (isParentSection) {
     return <ParentNavbar />;
   }
@@ -54,24 +74,36 @@ export default function App() {
           <Routes>
             {/* Public / School Routes */}
             <Route path="/" element={<Home />} />
-            
-            {/* Student Routes */}
-            <Route path="/students" element={<Students />} />
-            <Route path="/students/add" element={<AddStudent />} />
-            <Route path="/students/edit/:id" element={<EditStudent />} />
-            <Route path="/students/:id" element={<StudentDetails />} />
 
-            {/* Classes Routes */}
+            {/* Public Learning Modules */}
             <Route path="/classes" element={<Classes />} />
             <Route path="/classes/:id" element={<Classes />} />
-
-            {/* Learning Modules */}
             <Route path="/games" element={<Games />} />
             <Route path="/quiz" element={<Quiz />} />
             <Route path="/results" element={<Results />} />
             <Route path="/progress" element={<Progress />} />
 
-            {/* Authentication Routes */}
+            {/* Teacher Authentication Routes */}
+            <Route path="/teacher/login" element={<TeacherLogin />} />
+            <Route path="/teacher/register" element={<TeacherLogin />} />
+            <Route path="/teacher" element={<Navigate to="/teacher/dashboard" replace />} />
+
+            {/* Teacher Protected Routes */}
+            <Route element={<TeacherProtectedRoute />}>
+              <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+              <Route path="/teacher/students" element={<TeacherStudents />} />
+              <Route path="/teacher/students/add" element={<AddStudent />} />
+              <Route path="/teacher/students/edit/:id" element={<EditStudent />} />
+              <Route path="/teacher/students/:id" element={<StudentDetails />} />
+
+              {/* Legacy / Direct student routes protected under Teacher role */}
+              <Route path="/students" element={<Navigate to="/teacher/students" replace />} />
+              <Route path="/students/add" element={<Navigate to="/teacher/students/add" replace />} />
+              <Route path="/students/edit/:id" element={<EditStudent />} />
+              <Route path="/students/:id" element={<StudentDetails />} />
+            </Route>
+
+            {/* Parent Authentication Routes */}
             <Route path="/login" element={<ParentLogin />} />
             <Route path="/register" element={<Register />} />
             <Route path="/parent/login" element={<ParentLogin />} />
@@ -92,6 +124,14 @@ export default function App() {
               <Route path="/parent/achievements" element={<ParentAchievements />} />
               <Route path="/parent/achievements/:id" element={<ParentAchievements />} />
               <Route path="/parent/profile" element={<ParentProfile />} />
+
+              {/* Parent Exclusive Kids Store */}
+              <Route path="/parent/store" element={<KidsStore />} />
+              <Route path="/parent/store/books" element={<Books />} />
+              <Route path="/parent/store/stationery" element={<Stationery />} />
+              <Route path="/parent/store/toys" element={<Toys />} />
+              <Route path="/parent/store/dresses" element={<KidsDresses />} />
+              <Route path="/parent/store/product/:id" element={<ProductDetails />} />
             </Route>
 
             {/* Catch-all fallback */}

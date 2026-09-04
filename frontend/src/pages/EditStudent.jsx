@@ -32,7 +32,7 @@ export default function EditStudent() {
     setError(null);
     try {
       await updateStudent(id, formData);
-      navigate('/students', { state: { message: `Student ${formData.name} updated successfully! ✨` } });
+      navigate('/teacher/students', { state: { message: `Student ${formData.name} updated successfully! ✨` } });
     } catch (err) {
       setError(err.message || 'Failed to update student details.');
     } finally {

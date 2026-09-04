@@ -1,10 +1,17 @@
 from flask import Blueprint, request, jsonify
 from models.student import StudentModel
+from models.progress import ProgressModel
+from models.result import ResultModel
+from models.game import GameModel
+from models.parent import ParentModel
+from routes.auth_middleware import teacher_required
 
 students_bp = Blueprint('students', __name__, url_prefix='/api/students')
 
 @students_bp.route('', methods=['GET'])
+@teacher_required
 def get_students():
+    """Get all students (Teacher only)."""
     try:
         class_name = request.args.get('class_name')
         search = request.args.get('search')
@@ -14,7 +21,9 @@ def get_students():
         return jsonify({"error": f"Failed to retrieve students: {str(e)}"}), 500
 
 @students_bp.route('/<int:student_id>', methods=['GET'])
+@teacher_required
 def get_student(student_id):
+    """Get student profile by ID (Teacher only)."""
     try:
         student = StudentModel.get_by_id(student_id)
         if not student:
@@ -23,8 +32,34 @@ def get_student(student_id):
     except Exception as e:
         return jsonify({"error": f"Failed to retrieve student: {str(e)}"}), 500
 
+@students_bp.route('/<int:student_id>/details', methods=['GET'])
+@teacher_required
+def get_student_full_details(student_id):
+    """Get student comprehensive academic portfolio (progress, results, games, achievements) (Teacher only)."""
+    try:
+        student = StudentModel.get_by_id(student_id)
+        if not student:
+            return jsonify({"error": f"Student with ID {student_id} not found"}), 404
+
+        progress = ProgressModel.get_by_student(student_id)
+        results = ResultModel.get_by_student(student_id)
+        games = GameModel.get_student_completions(student_id)
+        achievements = ParentModel.get_child_achievements(None, student_id)
+
+        return jsonify({
+            "student": student,
+            "progress": progress,
+            "results": results,
+            "games": games,
+            "achievements": achievements
+        }), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to retrieve student details: {str(e)}"}), 500
+
 @students_bp.route('/class/<string:class_name>', methods=['GET'])
+@teacher_required
 def get_students_by_class(class_name):
+    """Get students enrolled in specific class (Teacher only)."""
     try:
         students = StudentModel.get_by_class(class_name)
         return jsonify(students), 200
@@ -32,7 +67,9 @@ def get_students_by_class(class_name):
         return jsonify({"error": f"Failed to retrieve students for class {class_name}: {str(e)}"}), 500
 
 @students_bp.route('', methods=['POST'])
+@teacher_required
 def add_student():
+    """Enroll a new student (Teacher only)."""
     try:
         data = request.get_json()
         if not data:
@@ -55,7 +92,9 @@ def add_student():
         return jsonify({"error": f"Failed to add student: {str(e)}"}), 500
 
 @students_bp.route('/<int:student_id>', methods=['PUT'])
+@teacher_required
 def update_student(student_id):
+    """Update student record (Teacher only)."""
     try:
         existing = StudentModel.get_by_id(student_id)
         if not existing:
@@ -76,7 +115,9 @@ def update_student(student_id):
         return jsonify({"error": f"Failed to update student: {str(e)}"}), 500
 
 @students_bp.route('/<int:student_id>', methods=['DELETE'])
+@teacher_required
 def delete_student(student_id):
+    """Delete student record (Teacher only)."""
     try:
         existing = StudentModel.get_by_id(student_id)
         if not existing:

@@ -48,8 +48,17 @@ export default function ParentLogin() {
       padding: '1rem'
     }}>
       <div className="card" style={{ padding: '2.5rem 2rem', textAlign: 'center' }}>
-        <div style={{ fontSize: '4rem', marginBottom: '0.5rem', animation: 'bounce 2s infinite' }}>
-          👨‍👩‍👧
+        <div style={{ marginBottom: '1rem' }}>
+          <img 
+            src="/logo.png" 
+            alt="Little Learners Logo" 
+            style={{ 
+              width: '130px', 
+              height: 'auto', 
+              animation: 'float 3.5s ease-in-out infinite',
+              filter: 'drop-shadow(0 8px 18px rgba(99, 102, 241, 0.2))'
+            }} 
+          />
         </div>
 
         <h1 style={{
@@ -142,11 +151,11 @@ export default function ParentLogin() {
 
           <button 
             type="submit" 
-            className="btn btn-primary btn-lg" 
+            className="btn btn-parent-submit btn-lg" 
             disabled={loading}
-            style={{ width: '100%', marginTop: '0.5rem', padding: '0.85rem' }}
+            style={{ width: '100%', marginTop: '0.6rem', padding: '0.95rem' }}
           >
-            {loading ? '🔐 Authenticating...' : '🚀 Sign In to Dashboard'}
+            {loading ? '🔐 Authenticating...' : '👨‍👩‍👧 Sign In to Parent Portal'}
           </button>
         </form>
 

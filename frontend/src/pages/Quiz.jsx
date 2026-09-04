@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { getQuizzes, getQuiz, getStudents, submitQuizResult } from '../services/api';
+import { 
+  getQuizzes, 
+  getQuiz, 
+  getStudents, 
+  submitQuizResult,
+  isTeacherAuthenticated,
+  isParentAuthenticated,
+  getParentChildren
+} from '../services/api';
 import QuizCard from '../components/QuizCard';
 import '../css/quiz.css';
 
@@ -28,13 +36,22 @@ export default function Quiz() {
     async function loadInitialData() {
       setLoading(true);
       try {
-        const [quizzesData, studentsData] = await Promise.all([
-          getQuizzes(),
-          getStudents()
-        ]);
+        const quizzesData = await getQuizzes();
         setQuizzes(quizzesData);
-        setStudents(studentsData);
-        if (studentsData.length > 0) {
+
+        let studentsData = [];
+        try {
+          if (isTeacherAuthenticated()) {
+            studentsData = await getStudents();
+          } else if (isParentAuthenticated()) {
+            studentsData = await getParentChildren();
+          }
+        } catch (sErr) {
+          console.log("Students optional for quiz in guest mode:", sErr);
+        }
+
+        setStudents(studentsData || []);
+        if (studentsData && studentsData.length > 0) {
           setSelectedStudentId(studentsData[0].id.toString());
         }
       } catch (err) {
@@ -309,9 +326,12 @@ export default function Quiz() {
               value={selectedStudentId}
               onChange={(e) => setSelectedStudentId(e.target.value)}
             >
+              {students.length === 0 && (
+                <option value="">Guest Learner 🌟</option>
+              )}
               {students.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} ({s.class_name})
+                  {s.name} {s.class_name ? `(${s.class_name})` : ''}
                 </option>
               ))}
             </select>

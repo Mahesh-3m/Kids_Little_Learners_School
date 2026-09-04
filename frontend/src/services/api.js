@@ -48,7 +48,40 @@ export function setActiveChildId(childId) {
 }
 
 /**
- * Generic request helper with robust error handling and token attachment
+ * Storage helpers for teacher auth state
+ */
+export const TEACHER_TOKEN_KEY = "ll_teacher_token";
+export const TEACHER_USER_KEY = "ll_teacher_user";
+
+export function getTeacherToken() {
+  return localStorage.getItem(TEACHER_TOKEN_KEY);
+}
+
+export function getStoredTeacher() {
+  const data = localStorage.getItem(TEACHER_USER_KEY);
+  try {
+    return data ? JSON.parse(data) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+export function setTeacherAuth(token, teacherUser) {
+  if (token) localStorage.setItem(TEACHER_TOKEN_KEY, token);
+  if (teacherUser) localStorage.setItem(TEACHER_USER_KEY, JSON.stringify(teacherUser));
+}
+
+export function removeTeacherAuth() {
+  localStorage.removeItem(TEACHER_TOKEN_KEY);
+  localStorage.removeItem(TEACHER_USER_KEY);
+}
+
+export function isTeacherAuthenticated() {
+  return Boolean(getTeacherToken());
+}
+
+/**
+ * Generic request helper with robust error handling and role-aware token attachment
  */
 async function apiRequest(endpoint, options = {}) {
   const url = `${API_URL}${endpoint}`;
@@ -56,9 +89,21 @@ async function apiRequest(endpoint, options = {}) {
     "Content-Type": "application/json",
   };
 
-  const token = getParentToken();
-  if (token) {
-    defaultHeaders["Authorization"] = `Bearer ${token}`;
+  // Attach appropriate Bearer token based on destination route if not explicitly set
+  if (!options.headers || !options.headers["Authorization"]) {
+    const teacherToken = getTeacherToken();
+    const parentToken = getParentToken();
+
+    if (endpoint.startsWith("/teacher") || endpoint.startsWith("/students")) {
+      const token = teacherToken || parentToken;
+      if (token) defaultHeaders["Authorization"] = `Bearer ${token}`;
+    } else if (endpoint.startsWith("/store") || endpoint.startsWith("/parent") || endpoint.startsWith("/parents")) {
+      const token = parentToken || teacherToken;
+      if (token) defaultHeaders["Authorization"] = `Bearer ${token}`;
+    } else {
+      const token = teacherToken || parentToken;
+      if (token) defaultHeaders["Authorization"] = `Bearer ${token}`;
+    }
   }
 
   const config = {
@@ -85,7 +130,7 @@ async function apiRequest(endpoint, options = {}) {
         (data && data.message) ||
         (data && data.error) ||
         `Server error: ${response.status} ${response.statusText}`;
-      
+
       const error = new Error(errorMessage);
       error.status = response.status;
       error.data = data;
@@ -102,7 +147,7 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 // ----------------------------------------------------
-// STUDENTS APIs
+// STUDENTS APIs (Teacher Protected)
 // ----------------------------------------------------
 export async function getStudents(className = "", search = "") {
   const params = new URLSearchParams();
@@ -114,6 +159,10 @@ export async function getStudents(className = "", search = "") {
 
 export async function getStudent(id) {
   return apiRequest(`/students/${id}`);
+}
+
+export async function getStudentAcademicDetails(id) {
+  return apiRequest(`/students/${id}/details`);
 }
 
 export async function getStudentsByClass(className) {
@@ -230,6 +279,43 @@ export async function getAllProgress() {
 }
 
 // ----------------------------------------------------
+// TEACHER AUTH APIs
+// ----------------------------------------------------
+export async function teacherLogin(credentials) {
+  const data = await apiRequest("/teacher/login", {
+    method: "POST",
+    body: JSON.stringify(credentials),
+  });
+  if (data && data.token) {
+    setTeacherAuth(data.token, data.teacher);
+  }
+  return data;
+}
+
+export async function teacherRegister(userData) {
+  const data = await apiRequest("/teacher/register", {
+    method: "POST",
+    body: JSON.stringify(userData),
+  });
+  if (data && data.token) {
+    setTeacherAuth(data.token, data.teacher);
+  }
+  return data;
+}
+
+export function logoutTeacher() {
+  removeTeacherAuth();
+}
+
+export async function getTeacherProfile() {
+  return apiRequest("/teacher/profile");
+}
+
+export async function getTeacherStats() {
+  return apiRequest("/teacher/stats");
+}
+
+// ----------------------------------------------------
 // PARENT / USER AUTH APIs
 // ----------------------------------------------------
 export async function parentLogin(credentials) {
@@ -307,9 +393,26 @@ export async function getChildAchievements(childId) {
   return apiRequest(`/parents/children/${childId}/achievements`);
 }
 
+// ----------------------------------------------------
+// KIDS STORE APIs (Parent Only)
+// ----------------------------------------------------
+export async function getStoreProducts(category = "") {
+  const params = new URLSearchParams();
+  if (category && category.toLowerCase() !== "all") {
+    params.append("category", category);
+  }
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return apiRequest(`/store/products${query}`);
+}
+
+export async function getStoreProduct(id) {
+  return apiRequest(`/store/products/${id}`);
+}
+
 export default {
   getStudents,
   getStudent,
+  getStudentAcademicDetails,
   getStudentsByClass,
   addStudent,
   updateStudent,
@@ -329,6 +432,17 @@ export default {
   getProgress,
   updateProgress,
   getAllProgress,
+  // Teacher APIs
+  teacherLogin,
+  teacherRegister,
+  logoutTeacher,
+  getTeacherProfile,
+  getTeacherStats,
+  getTeacherToken,
+  getStoredTeacher,
+  setTeacherAuth,
+  removeTeacherAuth,
+  isTeacherAuthenticated,
   // Parent APIs
   parentLogin,
   parentRegister,
@@ -350,4 +464,7 @@ export default {
   isParentAuthenticated,
   getActiveChildId,
   setActiveChildId,
+  // Kids Store APIs
+  getStoreProducts,
+  getStoreProduct,
 };

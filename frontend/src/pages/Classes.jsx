@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getClasses, getClassStudents } from '../services/api';
+import { getClasses, getClassStudents, isTeacherAuthenticated } from '../services/api';
 import StudentCard from '../components/StudentCard';
 
 export default function Classes() {
@@ -172,9 +172,15 @@ export default function Classes() {
             </h2>
             <p style={{ color: '#64748b' }}>Students currently admitted to this grade</p>
           </div>
-          <Link to="/students/add" className="btn btn-primary">
-            ➕ Add Student to {classInfo?.class_name || 'Class'}
-          </Link>
+          {isTeacherAuthenticated() ? (
+            <Link to="/teacher/students/add" className="btn btn-primary">
+              ➕ Add Student to {classInfo?.class_name || 'Class'}
+            </Link>
+          ) : (
+            <Link to="/teacher/students/add" className="btn btn-outline" title="Teacher credentials required">
+              👩‍🏫 Teacher Enroll Student
+            </Link>
+          )}
         </div>
 
         {loadingStudents ? (
@@ -187,7 +193,7 @@ export default function Classes() {
             <div className="empty-icon">🎒</div>
             <h3 className="empty-title">No Students Enrolled in {classInfo?.class_name}</h3>
             <p className="empty-desc">There are currently no children admitted to {classInfo?.class_name}.</p>
-            <Link to="/students/add" className="btn btn-primary">
+            <Link to="/teacher/students/add" className="btn btn-primary">
               Enroll Student Now
             </Link>
           </div>

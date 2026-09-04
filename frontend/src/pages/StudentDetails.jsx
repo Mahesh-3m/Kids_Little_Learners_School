@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getStudent, getStudentResults, getStudentGames, getProgress } from '../services/api';
+import { getStudent, getStudentResults, getStudentGames, getProgress, getStudentAcademicDetails } from '../services/api';
 import ProgressCard from '../components/ProgressCard';
+import AchievementCard from '../components/AchievementCard';
 import '../css/students.css';
 import '../css/progress.css';
 
@@ -11,6 +12,7 @@ export default function StudentDetails() {
   const [results, setResults] = useState([]);
   const [games, setGames] = useState([]);
   const [progress, setProgress] = useState(null);
+  const [achievements, setAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -19,6 +21,22 @@ export default function StudentDetails() {
       setLoading(true);
       setError(null);
       try {
+        // Try to get unified academic details first (Teacher API)
+        try {
+          const detailed = await getStudentAcademicDetails(id);
+          if (detailed && detailed.student) {
+            setStudent(detailed.student);
+            setResults(detailed.results || []);
+            setGames(detailed.games || []);
+            setProgress(detailed.progress || null);
+            setAchievements(detailed.achievements || []);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          // Fallback to individual APIs
+        }
+
         const [studentData, resultsData, gamesData, progressData] = await Promise.all([
           getStudent(id),
           getStudentResults(id).catch(() => []),
@@ -84,10 +102,10 @@ export default function StudentDetails() {
           </div>
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
-          <Link to={`/students/edit/${student.id}`} className="btn btn-warning">
+          <Link to={`/teacher/students/edit/${student.id}`} className="btn btn-warning">
             ✏️ Edit Profile
           </Link>
-          <Link to="/students" className="btn btn-outline">
+          <Link to="/teacher/students" className="btn btn-outline">
             ← All Students
           </Link>
         </div>
@@ -243,6 +261,20 @@ export default function StudentDetails() {
           </div>
         )}
       </section>
+
+      {/* Student Achievements */}
+      {achievements && achievements.length > 0 && (
+        <section style={{ marginTop: '2.5rem' }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span>🏆</span> Student Badges & Achievements
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.2rem' }}>
+            {achievements.map((ach) => (
+              <AchievementCard key={ach.id} achievement={ach} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { getGames, getStudents, completeGame } from '../services/api';
+import { 
+  getGames, 
+  getStudents, 
+  completeGame, 
+  isTeacherAuthenticated, 
+  isParentAuthenticated, 
+  getParentChildren 
+} from '../services/api';
 import GameCard from '../components/GameCard';
 import '../css/games.css';
 
@@ -63,13 +70,22 @@ export default function Games() {
     async function loadData() {
       setLoading(true);
       try {
-        const [gamesData, studentsData] = await Promise.all([
-          getGames(),
-          getStudents()
-        ]);
+        const gamesData = await getGames();
         setGames(gamesData);
-        setStudents(studentsData);
-        if (studentsData.length > 0) {
+
+        let studentsData = [];
+        try {
+          if (isTeacherAuthenticated()) {
+            studentsData = await getStudents();
+          } else if (isParentAuthenticated()) {
+            studentsData = await getParentChildren();
+          }
+        } catch (sErr) {
+          console.log("Students optional in guest mode:", sErr);
+        }
+
+        setStudents(studentsData || []);
+        if (studentsData && studentsData.length > 0) {
           setSelectedStudentId(studentsData[0].id.toString());
         }
       } catch (err) {
@@ -194,8 +210,11 @@ export default function Games() {
               </div>
 
               <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+                <span className="game-score-badge">
+                  ⭐ Score: {score}
+                </span>
                 <button 
-                  className="btn btn-outline btn-sm" 
+                  className="game-sound-btn" 
                   onClick={() => speakText(currentQ?.question)}
                   title="Read question aloud"
                 >
@@ -209,9 +228,9 @@ export default function Games() {
 
             {!gameFinished ? (
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', color: '#64748b', fontWeight: 700 }}>
-                  <span>Round {currentLevelIndex + 1} of {currentQuestions.length}</span>
-                  <span>Score: {score} ⭐</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.2rem', color: '#64748b', fontWeight: 700 }}>
+                  <span className="badge badge-gender">🎯 Round {currentLevelIndex + 1} of {currentQuestions.length}</span>
+                  <span className="badge badge-lkg">🌟 Category: {activeGame.category}</span>
                 </div>
 
                 <div className="game-question-box">
@@ -233,6 +252,9 @@ export default function Games() {
                         disabled={selectedAnswer !== null}
                       >
                         <span>{opt}</span>
+                        {currentQ?.subtext && currentQ?.answer === opt && isCorrect && (
+                          <span className="game-opt-subtext">{currentQ.subtext}</span>
+                        )}
                       </button>
                     );
                   })}
@@ -280,9 +302,12 @@ export default function Games() {
               value={selectedStudentId}
               onChange={(e) => setSelectedStudentId(e.target.value)}
             >
+              {students.length === 0 && (
+                <option value="">Guest Learner 🌟</option>
+              )}
               {students.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} ({s.class_name})
+                  {s.name} {s.class_name ? `(${s.class_name})` : ''}
                 </option>
               ))}
             </select>

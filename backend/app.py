@@ -20,10 +20,19 @@ from routes.quiz import quiz_bp
 from routes.results import results_bp
 from routes.progress import progress_bp
 from routes.parents import parents_bp
+from routes.teacher import teacher_bp
+from routes.store import store_bp
+from database.init_app_db import init_required_tables
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    # Initialize tables if needed
+    try:
+        init_required_tables()
+    except Exception as e:
+        print(f"[INIT] Table initialization notice: {e}")
 
     # Enable CORS for React frontend
     CORS(app, resources={
@@ -42,6 +51,8 @@ def create_app():
     app.register_blueprint(results_bp)
     app.register_blueprint(progress_bp)
     app.register_blueprint(parents_bp)
+    app.register_blueprint(teacher_bp)
+    app.register_blueprint(store_bp)
 
     @app.route('/api/health', methods=['GET'])
     def health_check():

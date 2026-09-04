@@ -13,7 +13,7 @@ export default function AddStudent() {
     setError(null);
     try {
       await addStudent(formData);
-      navigate('/students', { state: { message: `Student ${formData.name} added successfully! 🌟` } });
+      navigate('/teacher/students', { state: { message: `Student ${formData.name} added successfully! 🌟` } });
     } catch (err) {
       setError(err.message || 'Failed to add student. Please check the form data.');
     } finally {

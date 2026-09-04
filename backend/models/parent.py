@@ -235,7 +235,7 @@ class ParentModel:
     @staticmethod
     def get_child_achievements(parent_id, child_id):
         """Compute and return achievements for child based on real activity and results."""
-        if not ParentModel.verify_child_ownership(parent_id, child_id):
+        if parent_id is not None and not ParentModel.verify_child_ownership(parent_id, child_id):
             return None
 
         # Gather student performance data
