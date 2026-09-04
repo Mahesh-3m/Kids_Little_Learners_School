@@ -6,6 +6,7 @@ from models.teacher import TeacherModel
 from models.toy_selection import ToySelectionModel
 from models.parent import ParentModel
 from models.student import StudentModel
+from models.store_details import StoreDetailsModel
 from routes.auth_middleware import (
     parent_required,
     store_manager_required,
@@ -246,6 +247,41 @@ def get_my_toy_selections():
         return jsonify({
             "error": "Internal Server Error",
             "message": f"Failed to retrieve toy selections: {str(e)}"
+        }), 500
+
+
+# ----------------------------------------------------
+# STORE DETAILS & LOCATION INFORMATION
+# ----------------------------------------------------
+
+@store_bp.route('/details', methods=['GET'])
+def get_store_details():
+    """Fetch current school store operating details, campus location, and hours."""
+    try:
+        details = StoreDetailsModel.get()
+        return jsonify(details), 200
+    except Exception as e:
+        return jsonify({
+            "error": "Internal Server Error",
+            "message": f"Failed to retrieve store details: {str(e)}"
+        }), 500
+
+@store_bp.route('/admin/details', methods=['PUT', 'POST'])
+@store_manager_required
+def admin_update_store_details():
+    """Store Manager updates store details, campus location, operating hours, dispatch policy, and announcements."""
+    try:
+        data = request.get_json() or {}
+        updated = StoreDetailsModel.update(data)
+        return jsonify({
+            "status": "success",
+            "message": "Store details updated successfully in database! 🏬",
+            "details": updated
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "error": "Internal Server Error",
+            "message": f"Failed to update store details: {str(e)}"
         }), 500
 
 

@@ -96,8 +96,8 @@ export default function StudentDetails() {
             <span className="badge badge-gender">
               {student.gender}
             </span>
-            <span className="badge badge-gender">
-              🆔 Roll #{student.id}
+            <span className="badge" style={{ background: '#ede9fe', color: '#6d28d9', fontWeight: 700 }}>
+              🆔 Student ID: {student.student_id || `LL-${String(student.id).padStart(3, '0')}`}
             </span>
           </div>
         </div>

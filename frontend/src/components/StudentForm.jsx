@@ -4,6 +4,7 @@ import '../css/forms.css';
 
 export default function StudentForm({ initialData = {}, onSubmit, isSubmitting = false, submitLabel = "Save Student" }) {
   const [formData, setFormData] = useState({
+    student_id: '',
     name: '',
     dob: '',
     class_name: 'Nursery',
@@ -114,6 +115,22 @@ export default function StudentForm({ initialData = {}, onSubmit, isSubmitting =
 
   return (
     <form className="student-form" onSubmit={handleSubmit} noValidate>
+      {/* Student ID (Optional / Auto-generated) */}
+      <div className="form-group">
+        <label className="form-label" htmlFor="student_id">
+          <span>🆔</span> Student ID <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500 }}>(Optional — Leave blank to auto-generate, e.g. LL-012)</span>
+        </label>
+        <input
+          id="student_id"
+          name="student_id"
+          type="text"
+          placeholder="e.g. LL-001 or leave blank for auto ID"
+          className="form-input"
+          value={formData.student_id || ''}
+          onChange={handleChange}
+        />
+      </div>
+
       {/* Student Name */}
       <div className="form-group">
         <label className="form-label" htmlFor="name">

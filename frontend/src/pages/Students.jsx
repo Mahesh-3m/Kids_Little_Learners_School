@@ -93,7 +93,7 @@ export default function Students() {
           <input
             type="text"
             className="search-input"
-            placeholder="Search by name, parent, phone..."
+            placeholder="Search by Student ID (e.g. LL-001), name, parent..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />

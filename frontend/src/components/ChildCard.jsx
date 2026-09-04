@@ -34,6 +34,9 @@ export default function ChildCard({ child, isSelected, onSelect }) {
             <span className="badge badge-gender">
               {child.gender === 'Female' ? '♀️ Girl' : '♂️ Boy'}
             </span>
+            <span className="badge" style={{ background: '#ede9fe', color: '#6d28d9', fontWeight: 700 }}>
+              🆔 {child.student_id || `LL-${String(child.id).padStart(3, '0')}`}
+            </span>
           </div>
         </div>
       </div>

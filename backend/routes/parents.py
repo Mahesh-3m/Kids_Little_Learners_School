@@ -277,14 +277,20 @@ def link_child():
         target_student = None
 
         if student_id:
-            try:
-                target_student = StudentModel.get_by_id(int(student_id))
-            except (ValueError, TypeError):
-                pass
+            # Resolve by official Student ID (e.g. LL-001, LL001) or row ID
+            target_student = StudentModel.get_by_student_id(student_id)
+            if not target_student:
+                try:
+                    target_student = StudentModel.get_by_id(int(student_id))
+                except (ValueError, TypeError):
+                    pass
         elif child_name:
-            matches = ParentModel.find_matching_students(student_name=child_name)
-            if matches:
-                target_student = StudentModel.get_by_id(matches[0]['id'])
+            # Check if student ID code was entered into the name input
+            target_student = StudentModel.get_by_student_id(child_name)
+            if not target_student:
+                matches = ParentModel.find_matching_students(student_name=child_name)
+                if matches:
+                    target_student = StudentModel.get_by_id(matches[0]['id'])
 
         if not target_student:
             return jsonify({

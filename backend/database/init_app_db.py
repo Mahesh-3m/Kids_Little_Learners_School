@@ -108,7 +108,81 @@ def init_required_tables():
                 INSERT INTO products (name, category, description, price, image_url, stock)
                 VALUES (%s, %s, %s, %s, %s, %s)
             """, sample_products)
-            print("[DB] Seeded initial preschool products across Toys, Books, Stationery, and Dresses.")
+        # 5. Store Details Table (Store Manager Profile & Settings)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS store_details (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                store_name VARCHAR(150) NOT NULL DEFAULT 'Little Learners Official Kids Store',
+                manager_name VARCHAR(100) DEFAULT 'Store Manager Alex',
+                email VARCHAR(100) DEFAULT 'store@littlelearners.com',
+                phone VARCHAR(50) DEFAULT '+1 (555) 019-2834',
+                location VARCHAR(250) DEFAULT 'Main Campus, Early Learning Wing A - Ground Floor',
+                operating_hours VARCHAR(150) DEFAULT 'Monday – Friday: 8:00 AM – 4:00 PM',
+                delivery_policy TEXT,
+                storage_capacity VARCHAR(200) DEFAULT 'Main Storage Warehouse: Books, Stationery, Sensory Toys, and Uniform Dresses',
+                description TEXT,
+                announcement VARCHAR(300) DEFAULT '✨ All preschool store supplies & educational toys in stock for immediate classroom dispatch!',
+                is_open TINYINT(1) NOT NULL DEFAULT 1,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        """)
+
+        # Check and populate default store details
+        cursor.execute("SELECT COUNT(*) AS cnt FROM store_details")
+        res_sd = cursor.fetchone()
+        sd_cnt = res_sd['cnt'] if isinstance(res_sd, dict) else res_sd[0]
+        if sd_cnt == 0:
+            cursor.execute("""
+                INSERT INTO store_details (
+                    store_name, manager_name, email, phone, location,
+                    operating_hours, delivery_policy, storage_capacity,
+                    description, announcement, is_open
+                ) VALUES (
+                    'Little Learners Official Kids Store',
+                    'Store Manager Alex',
+                    'store@littlelearners.com',
+                    '+1 (555) 019-2834',
+                    'Main Campus, Early Learning Wing A - Ground Floor',
+                    'Monday – Friday: 8:00 AM – 4:00 PM',
+                    'Student toy and stationery selections are packaged and dispatched directly to child classrooms every weekday by 2:30 PM.',
+                    'Dedicated 4-Department Storage: Books, Stationery, Sensory Toys, and Uniform Dresses',
+                    'Official school educational supplies store providing storybooks, art materials, tactile play toys, and uniforms for Little Learners preschool and kindergarten.',
+                    '✨ All preschool store supplies & educational toys in stock for immediate classroom dispatch!',
+                    1
+                )
+            """)
+            print("[DB] Initialized default store_details record in database.")
+
+        # 6. Student ID Column Migration in students table
+        cursor.execute("""
+            SELECT COUNT(*) AS cnt 
+            FROM information_schema.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+              AND TABLE_NAME = 'students' 
+              AND COLUMN_NAME = 'student_id'
+        """)
+        col_res = cursor.fetchone()
+        has_student_id = (col_res['cnt'] if isinstance(col_res, dict) else col_res[0]) > 0
+
+        if not has_student_id:
+            cursor.execute("ALTER TABLE students ADD COLUMN student_id VARCHAR(50) UNIQUE AFTER id")
+            cursor.execute("SELECT id FROM students ORDER BY id ASC")
+            students_list = cursor.fetchall()
+            for s in students_list:
+                s_id = s['id'] if isinstance(s, dict) else s[0]
+                code = f"LL-{s_id:03d}"
+                cursor.execute("UPDATE students SET student_id = %s WHERE id = %s", (code, s_id))
+            print(f"[DB Migration] Added student_id column and populated standardized IDs for {len(students_list)} students.")
+        else:
+            # Ensure any null student_id gets populated
+            cursor.execute("SELECT id FROM students WHERE student_id IS NULL OR student_id = ''")
+            empty_students = cursor.fetchall()
+            for s in empty_students:
+                s_id = s['id'] if isinstance(s, dict) else s[0]
+                code = f"LL-{s_id:03d}"
+                cursor.execute("UPDATE students SET student_id = %s WHERE id = %s", (code, s_id))
+            if empty_students:
+                print(f"[DB Migration] Populated missing student_id for {len(empty_students)} students.")
 
         conn.commit()
     except Exception as e:

@@ -5,7 +5,8 @@ import {
   getParentChildren,
   selectStoreProductForChild,
   getMyToySelections,
-  getActiveChildId
+  getActiveChildId,
+  getStoreDetails
 } from '../services/api';
 import ProductCard from '../components/ProductCard';
 import '../css/store.css';
@@ -24,6 +25,7 @@ export default function KidsStore({ initialCategory = '' }) {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState(initialCategory || 'all');
+  const [storeDetails, setStoreDetails] = useState(null);
 
   // Child selection & orders state
   const [children, setChildren] = useState([]);
@@ -51,13 +53,15 @@ export default function KidsStore({ initialCategory = '' }) {
       setError(null);
       try {
         const catFilter = activeCategory === 'all' ? '' : activeCategory;
-        const [prodData, kidsData] = await Promise.all([
+        const [prodData, kidsData, detailsData] = await Promise.all([
           getStoreProducts(catFilter),
-          getParentChildren().catch(() => [])
+          getParentChildren().catch(() => []),
+          getStoreDetails().catch(() => null)
         ]);
 
         if (isMounted) {
           setProducts(prodData || []);
+          if (detailsData) setStoreDetails(detailsData);
           const kids = kidsData || [];
           setChildren(kids);
           const activeId = getActiveChildId();
@@ -166,6 +170,60 @@ export default function KidsStore({ initialCategory = '' }) {
           </button>
         </div>
       </div>
+
+      {/* Live Store Details & Announcement Strip */}
+      {storeDetails && (
+        <div style={{ marginBottom: '1.5rem' }}>
+          {storeDetails.announcement && (
+            <div
+              style={{
+                background: '#fef3c7',
+                border: '1.5px solid #fde68a',
+                color: '#92400e',
+                padding: '0.65rem 1rem',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                marginBottom: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <span style={{ fontSize: '1.2rem' }}>📢</span>
+              <span>{storeDetails.announcement}</span>
+            </div>
+          )}
+
+          <div
+            style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 'var(--radius-md)',
+              padding: '0.75rem 1.25rem',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '1.5rem',
+              alignItems: 'center',
+              fontSize: '0.85rem',
+              color: '#475569'
+            }}
+          >
+            <div>
+              <strong>📍 Campus Location:</strong> {storeDetails.location || 'Main Campus'}
+            </div>
+            <div>
+              <strong>⏰ Hours:</strong> {storeDetails.operating_hours || 'Mon–Fri 8am–4pm'}
+            </div>
+            <div>
+              <strong>🚚 Dispatch:</strong> {storeDetails.delivery_policy || 'Classroom fulfillment'}
+            </div>
+            <div>
+              <strong>📞 Support:</strong> {storeDetails.phone}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Success Notification */}
       {successMessage && (

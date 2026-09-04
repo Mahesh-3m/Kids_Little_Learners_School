@@ -87,6 +87,7 @@ def init_sqlite_db():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS students (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id TEXT UNIQUE,
                 name TEXT NOT NULL,
                 dob DATE NOT NULL,
                 class_name TEXT NOT NULL,
@@ -246,6 +247,25 @@ def init_sqlite_db():
                 price REAL NOT NULL,
                 status TEXT NOT NULL DEFAULT 'Requested',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        # 15. Store Details Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS store_details (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                store_name TEXT NOT NULL DEFAULT 'Little Learners Official Kids Store',
+                manager_name TEXT DEFAULT 'Store Manager Alex',
+                email TEXT DEFAULT 'store@littlelearners.com',
+                phone TEXT DEFAULT '+1 (555) 019-2834',
+                location TEXT DEFAULT 'Main Campus, Early Learning Wing A - Ground Floor',
+                operating_hours TEXT DEFAULT 'Monday – Friday: 8:00 AM – 4:00 PM',
+                delivery_policy TEXT,
+                storage_capacity TEXT DEFAULT 'Main Storage Warehouse: Books, Stationery, Sensory Toys, and Uniform Dresses',
+                description TEXT,
+                announcement TEXT DEFAULT '✨ All preschool store supplies & educational toys in stock for immediate classroom dispatch!',
+                is_open INTEGER NOT NULL DEFAULT 1,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
 

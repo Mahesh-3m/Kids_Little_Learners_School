@@ -96,6 +96,15 @@ export default function StoreAdminNavbar() {
                 <span>🎁</span> Kid Toy Requests
               </NavLink>
             </li>
+            <li className="nav-item">
+              <NavLink
+                to="/store-admin/details"
+                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                onClick={closeMenu}
+              >
+                <span>🏪</span> Store Details
+              </NavLink>
+            </li>
 
             {/* Manager info & controls */}
             <li className="nav-item" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginLeft: '0.5rem' }}>

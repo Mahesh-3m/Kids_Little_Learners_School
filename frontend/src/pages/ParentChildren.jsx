@@ -53,7 +53,7 @@ export default function ParentChildren() {
     setLinkLoading(true);
     try {
       const payload = {};
-      if (sId) payload.student_id = parseInt(sId, 10);
+      if (sId) payload.student_id = sId;
       if (cName) payload.child_name = cName;
 
       const res = await linkChildToParent(payload);
@@ -173,11 +173,11 @@ export default function ParentChildren() {
               </div>
 
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label className="form-label" style={{ fontWeight: 700, fontSize: '0.88rem' }}>Student ID Number</label>
+                <label className="form-label" style={{ fontWeight: 700, fontSize: '0.88rem' }}>Child's Student ID (e.g. LL-001)</label>
                 <input
-                  type="number"
+                  type="text"
                   className="form-input"
-                  placeholder="e.g. 1, 2, 3, 4, 5..."
+                  placeholder="e.g. LL-001, LL-002, LL-003..."
                   value={linkStudentId}
                   onChange={(e) => setLinkStudentId(e.target.value)}
                 />

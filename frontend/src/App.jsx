@@ -45,6 +45,7 @@ import StoreAdminDashboard from './pages/StoreAdminDashboard';
 import StoreAdminProducts from './pages/StoreAdminProducts';
 import StoreAdminAddProduct from './pages/StoreAdminAddProduct';
 import StoreAdminToySelections from './pages/StoreAdminToySelections';
+import StoreAdminDetails from './pages/StoreAdminDetails';
 
 // Kids Store Pages (Parent Only)
 import KidsStore from './pages/KidsStore';
@@ -158,6 +159,7 @@ export default function App() {
               <Route path="/store-admin/products" element={<StoreAdminProducts />} />
               <Route path="/store-admin/add-product" element={<StoreAdminAddProduct />} />
               <Route path="/store-admin/toy-selections" element={<StoreAdminToySelections />} />
+              <Route path="/store-admin/details" element={<StoreAdminDetails />} />
             </Route>
 
             {/* Catch-all fallback */}

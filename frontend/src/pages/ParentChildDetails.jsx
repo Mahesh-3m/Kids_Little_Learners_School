@@ -105,6 +105,9 @@ export default function ParentChildDetails() {
                 <span className="badge badge-gender">
                   📅 DOB: {student.dob}
                 </span>
+                <span className="badge" style={{ background: '#ede9fe', color: '#6d28d9', fontWeight: 700 }}>
+                  🆔 Student ID: {student.student_id || `LL-${String(student.id).padStart(3, '0')}`}
+                </span>
               </div>
             </div>
           </div>

@@ -32,6 +32,9 @@ export default function StudentCard({ student, onDelete, basePath = '/teacher/st
               <span className="badge badge-gender">
                 {student.gender}
               </span>
+              <span className="badge" style={{ background: '#ede9fe', color: '#6d28d9', fontWeight: 700 }}>
+                🆔 {student.student_id || `LL-${String(student.id).padStart(3, '0')}`}
+              </span>
             </div>
           </div>
         </div>

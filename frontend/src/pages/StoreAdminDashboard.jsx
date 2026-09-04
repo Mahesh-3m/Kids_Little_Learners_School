@@ -4,13 +4,15 @@ import {
   adminGetStoreStats,
   adminGetToySelections,
   adminUpdateSelectionStatus,
-  getStoredStoreManager
+  getStoredStoreManager,
+  getStoreDetails
 } from '../services/api';
 import '../css/parent.css';
 
 export default function StoreAdminDashboard() {
   const [manager] = useState(getStoredStoreManager());
   const [stats, setStats] = useState(null);
+  const [storeDetails, setStoreDetails] = useState(null);
   const [recentSelections, setRecentSelections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,12 +26,14 @@ export default function StoreAdminDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const [statsData, selectionsData] = await Promise.all([
+      const [statsData, selectionsData, detailsData] = await Promise.all([
         adminGetStoreStats(),
-        adminGetToySelections()
+        adminGetToySelections(),
+        getStoreDetails().catch(() => null)
       ]);
       setStats(statsData);
       setRecentSelections((selectionsData || []).slice(0, 6));
+      setStoreDetails(detailsData);
     } catch (err) {
       setError(err.message || 'Failed to load store admin dashboard data.');
     } finally {
@@ -716,6 +720,124 @@ export default function StoreAdminDashboard() {
               >
                 ➕ Add
               </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* School Store Information & Operating Details Card */}
+      <section style={{ marginBottom: '2.5rem' }}>
+        <div
+          className="card"
+          style={{
+            padding: '1.75rem',
+            background: 'linear-gradient(135deg, #f0fdfa 0%, #ffffff 60%)',
+            border: '2px solid #99f6e4',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: '0 4px 15px rgba(15, 118, 110, 0.08)'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', flexWrap: 'wrap', gap: '0.8rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span style={{ fontSize: '1.8rem', background: '#ccfbf1', padding: '0.4rem', borderRadius: 'var(--radius-md)', lineHeight: 1 }}>
+                🏪
+              </span>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#0f766e', fontWeight: 800 }}>
+                  {storeDetails?.store_name || 'Little Learners Official Kids Store'}
+                </h3>
+                <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                  Live Store Details Stored in Database
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+              <span
+                style={{
+                  background: storeDetails?.is_open ? '#dcfce7' : '#fee2e2',
+                  color: storeDetails?.is_open ? '#166534' : '#991b1b',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '9999px',
+                  border: storeDetails?.is_open ? '1px solid #bbf7d0' : '1px solid #fecaca'
+                }}
+              >
+                {storeDetails?.is_open ? '● OPEN FOR REQUESTS' : '● TEMPORARILY CLOSED'}
+              </span>
+              <Link
+                to="/store-admin/details"
+                className="btn btn-sm"
+                style={{
+                  background: '#0f766e',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.82rem',
+                  padding: '0.4rem 0.9rem',
+                  borderRadius: 'var(--radius-md)',
+                  textDecoration: 'none'
+                }}
+              >
+                ✏️ Manage Store Details →
+              </Link>
+            </div>
+          </div>
+
+          {storeDetails?.announcement && (
+            <div
+              style={{
+                background: '#fef3c7',
+                border: '1px solid #fde68a',
+                color: '#92400e',
+                padding: '0.55rem 0.85rem',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.88rem',
+                fontWeight: 600,
+                marginBottom: '1rem'
+              }}
+            >
+              📢 {storeDetails.announcement}
+            </div>
+          )}
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '1rem',
+              paddingTop: '0.75rem',
+              borderTop: '1px dashed #cbd5e1',
+              fontSize: '0.88rem',
+              color: '#334155'
+            }}
+          >
+            <div>
+              <div style={{ color: '#64748b', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase' }}>📍 Campus Location</div>
+              <div style={{ fontWeight: 600, color: '#0f172a', marginTop: '0.2rem' }}>
+                {storeDetails?.location || 'Main Campus, Early Learning Wing A'}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ color: '#64748b', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase' }}>⏰ Operating Hours</div>
+              <div style={{ fontWeight: 600, color: '#0f172a', marginTop: '0.2rem' }}>
+                {storeDetails?.operating_hours || 'Mon – Fri: 8:00 AM – 4:00 PM'}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ color: '#64748b', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase' }}>🚚 Dispatch Policy</div>
+              <div style={{ fontWeight: 600, color: '#0f172a', marginTop: '0.2rem' }}>
+                {storeDetails?.delivery_policy || 'Daily classroom dispatch.'}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ color: '#64748b', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase' }}>👤 Contact</div>
+              <div style={{ fontWeight: 600, color: '#0f172a', marginTop: '0.2rem' }}>
+                {storeDetails?.manager_name || 'Store Manager Alex'} ({storeDetails?.phone || '+1 555-019-2834'})
+              </div>
             </div>
           </div>
         </div>

@@ -45,10 +45,13 @@ class ParentModel:
         return True
 
     @staticmethod
-    def find_matching_students(phone=None, student_name=None):
-        """Find registered students by matching phone or student name for quick linkage."""
+    def find_matching_students(phone=None, student_name=None, student_code=None):
+        """Find registered students by matching student ID code, phone or student name for quick linkage."""
         conditions = []
         params = []
+        if student_code:
+            conditions.append("(student_id = %s OR LOWER(student_id) = LOWER(%s))")
+            params.extend([student_code, student_code])
         if phone:
             conditions.append("phone = %s")
             params.append(phone)
@@ -59,7 +62,7 @@ class ParentModel:
         if not conditions:
             return []
         
-        query = f"SELECT id, name, class_name, parent_name, phone FROM students WHERE {' OR '.join(conditions)}"
+        query = f"SELECT id, student_id, name, class_name, parent_name, phone FROM students WHERE {' OR '.join(conditions)}"
         return fetch_all(query, tuple(params))
 
     @staticmethod

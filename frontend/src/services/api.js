@@ -562,6 +562,17 @@ export async function adminUpdateSelectionStatus(id, status) {
   });
 }
 
+export async function getStoreDetails() {
+  return apiRequest("/store/details");
+}
+
+export async function adminUpdateStoreDetails(details) {
+  return apiRequest("/store/admin/details", {
+    method: "PUT",
+    body: JSON.stringify(details),
+  });
+}
+
 export default {
   getStudents,
   getStudent,
@@ -643,4 +654,6 @@ export default {
   adminDeleteProduct,
   adminGetToySelections,
   adminUpdateSelectionStatus,
+  getStoreDetails,
+  adminUpdateStoreDetails,
 };
