@@ -62,11 +62,12 @@ function DynamicNavbar() {
   const location = useLocation();
   const parentAuthRoutes = ['/parent/login', '/parent/register', '/login', '/register'];
   const teacherAuthRoutes = ['/teacher/login', '/teacher/register'];
-  const storeAuthRoutes = ['/store-admin/login'];
+  const storeAuthRoutes = ['/store-admin/login', '/seller/login'];
 
   const isTeacherSection = location.pathname.startsWith('/teacher') && !teacherAuthRoutes.includes(location.pathname);
   const isParentSection = location.pathname.startsWith('/parent') && !parentAuthRoutes.includes(location.pathname);
-  const isStoreSection = location.pathname.startsWith('/store-admin') && !storeAuthRoutes.includes(location.pathname);
+  const isStoreSection = (location.pathname.startsWith('/store-admin') || location.pathname.startsWith('/seller')) && !storeAuthRoutes.includes(location.pathname);
+
 
   if (isTeacherSection) {
     return <TeacherNavbar />;
@@ -149,18 +150,26 @@ export default function App() {
               <Route path="/parent/store/product/:id" element={<ProductDetails />} />
             </Route>
 
-            {/* Store Admin (Role 4) Authentication Route */}
+            {/* Store Admin & Seller (Role 4) Authentication Route */}
             <Route path="/store-admin/login" element={<StoreAdminLogin />} />
             <Route path="/store-admin" element={<Navigate to="/store-admin/dashboard" replace />} />
+            <Route path="/seller/login" element={<StoreAdminLogin />} />
+            <Route path="/seller" element={<Navigate to="/seller/dashboard" replace />} />
 
-            {/* Store Admin (Role 4) Protected Routes */}
+            {/* Store Admin & Seller (Role 4) Protected Routes */}
             <Route element={<StoreAdminProtectedRoute />}>
               <Route path="/store-admin/dashboard" element={<StoreAdminDashboard />} />
               <Route path="/store-admin/products" element={<StoreAdminProducts />} />
               <Route path="/store-admin/add-product" element={<StoreAdminAddProduct />} />
               <Route path="/store-admin/toy-selections" element={<StoreAdminToySelections />} />
               <Route path="/store-admin/details" element={<StoreAdminDetails />} />
+              
+              {/* Seller Route Aliases */}
+              <Route path="/seller/dashboard" element={<StoreAdminDashboard />} />
+              <Route path="/seller/products" element={<StoreAdminProducts />} />
+              <Route path="/seller/add-product" element={<StoreAdminAddProduct />} />
             </Route>
+
 
             {/* Catch-all fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />

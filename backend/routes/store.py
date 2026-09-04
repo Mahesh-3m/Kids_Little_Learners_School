@@ -323,7 +323,7 @@ def admin_get_products():
 @store_bp.route('/admin/products', methods=['POST'])
 @store_manager_required
 def admin_create_product():
-    """Store Manager adds a new product to the store inventory."""
+    """Store Manager / Seller adds a new product to the store inventory."""
     try:
         data = request.get_json() or {}
         name = data.get('name', '').strip()
@@ -337,7 +337,9 @@ def admin_create_product():
         if price is None:
             return jsonify({"error": "Bad Request", "message": "Product price is required."}), 400
 
-        new_id = ProductModel.create(data)
+        seller_id = g.current_store_manager.get('id', 1)
+        data['seller_id'] = seller_id
+        new_id = ProductModel.create(data, seller_id=seller_id)
         created = ProductModel.get_by_id(new_id)
 
         return jsonify({
@@ -354,7 +356,7 @@ def admin_create_product():
 @store_bp.route('/admin/products/<int:product_id>', methods=['GET'])
 @store_manager_required
 def admin_get_single_product(product_id):
-    """Store Manager fetches a single product for editing."""
+    """Store Manager / Seller fetches a single product for editing."""
     try:
         product = ProductModel.get_by_id(product_id)
         if not product:
@@ -369,11 +371,23 @@ def admin_get_single_product(product_id):
 @store_bp.route('/admin/products/<int:product_id>', methods=['PUT'])
 @store_manager_required
 def admin_update_product(product_id):
-    """Store Manager updates full product details."""
+    """Store Manager / Seller updates full product details with backend ownership check."""
     try:
         product = ProductModel.get_by_id(product_id)
         if not product:
             return jsonify({"error": "Not Found", "message": f"Product {product_id} not found."}), 404
+
+        # Strict Backend Ownership Check: Seller A cannot edit Seller B's products
+        manager = g.current_store_manager
+        prod_seller_id = product.get('seller_id')
+        if (prod_seller_id is not None and 
+            prod_seller_id != manager.get('id') and 
+            manager.get('role') != 'teacher_store_manager' and 
+            manager.get('id') != 1):
+            return jsonify({
+                "error": "Forbidden",
+                "message": "Access denied. You can only modify products belonging to your seller account."
+            }), 403
 
         data = request.get_json() or {}
         ProductModel.update(product_id, data)
@@ -393,7 +407,7 @@ def admin_update_product(product_id):
 @store_bp.route('/admin/products/<int:product_id>/stock', methods=['PATCH'])
 @store_manager_required
 def admin_update_stock(product_id):
-    """Store Manager updates inventory stock level."""
+    """Store Manager / Seller updates inventory stock level with ownership check."""
     try:
         data = request.get_json() or {}
         if 'stock' not in data:
@@ -406,6 +420,18 @@ def admin_update_stock(product_id):
         product = ProductModel.get_by_id(product_id)
         if not product:
             return jsonify({"error": "Not Found", "message": f"Product {product_id} not found."}), 404
+
+        # Strict Backend Ownership Check
+        manager = g.current_store_manager
+        prod_seller_id = product.get('seller_id')
+        if (prod_seller_id is not None and 
+            prod_seller_id != manager.get('id') and 
+            manager.get('role') != 'teacher_store_manager' and 
+            manager.get('id') != 1):
+            return jsonify({
+                "error": "Forbidden",
+                "message": "Access denied. You can only update stock for your own products."
+            }), 403
 
         ProductModel.update_stock(product_id, new_stock)
         return jsonify({
@@ -422,7 +448,7 @@ def admin_update_stock(product_id):
 @store_bp.route('/admin/products/<int:product_id>/price', methods=['PATCH'])
 @store_manager_required
 def admin_update_price(product_id):
-    """Store Manager updates product price."""
+    """Store Manager / Seller updates product price with ownership check."""
     try:
         data = request.get_json() or {}
         if 'price' not in data:
@@ -435,6 +461,18 @@ def admin_update_price(product_id):
         product = ProductModel.get_by_id(product_id)
         if not product:
             return jsonify({"error": "Not Found", "message": f"Product {product_id} not found."}), 404
+
+        # Strict Backend Ownership Check
+        manager = g.current_store_manager
+        prod_seller_id = product.get('seller_id')
+        if (prod_seller_id is not None and 
+            prod_seller_id != manager.get('id') and 
+            manager.get('role') != 'teacher_store_manager' and 
+            manager.get('id') != 1):
+            return jsonify({
+                "error": "Forbidden",
+                "message": "Access denied. You can only update price for your own products."
+            }), 403
 
         ProductModel.update_price(product_id, new_price)
         return jsonify({
@@ -451,11 +489,23 @@ def admin_update_price(product_id):
 @store_bp.route('/admin/products/<int:product_id>', methods=['DELETE'])
 @store_manager_required
 def admin_delete_product(product_id):
-    """Store Manager deletes a product from the catalog."""
+    """Store Manager / Seller deletes a product from the catalog with ownership check."""
     try:
         product = ProductModel.get_by_id(product_id)
         if not product:
             return jsonify({"error": "Not Found", "message": f"Product {product_id} not found."}), 404
+
+        # Strict Backend Ownership Check
+        manager = g.current_store_manager
+        prod_seller_id = product.get('seller_id')
+        if (prod_seller_id is not None and 
+            prod_seller_id != manager.get('id') and 
+            manager.get('role') != 'teacher_store_manager' and 
+            manager.get('id') != 1):
+            return jsonify({
+                "error": "Forbidden",
+                "message": "Access denied. You can only delete products belonging to your seller account."
+            }), 403
 
         ProductModel.delete(product_id)
         return jsonify({
@@ -517,3 +567,60 @@ def admin_update_selection_status(selection_id):
             "error": "Internal Server Error",
             "message": f"Failed to update selection status: {str(e)}"
         }), 500
+
+
+# ----------------------------------------------------
+# DEDICATED SELLER BLUEPRINT & ROUTE ALIASES (Role 4)
+# ----------------------------------------------------
+
+seller_bp = Blueprint('seller', __name__, url_prefix='/api/seller')
+
+@seller_bp.route('/login', methods=['POST'])
+def seller_login_endpoint():
+    return store_login()
+
+@seller_bp.route('/profile', methods=['GET'])
+@store_manager_required
+def seller_profile_endpoint():
+    return get_store_profile()
+
+@seller_bp.route('/stats', methods=['GET'])
+@store_manager_required
+def seller_stats_endpoint():
+    return get_admin_stats()
+
+@seller_bp.route('/products', methods=['GET'])
+@store_manager_required
+def seller_products_get_endpoint():
+    return admin_get_products()
+
+@seller_bp.route('/products', methods=['POST'])
+@store_manager_required
+def seller_products_post_endpoint():
+    return admin_create_product()
+
+@seller_bp.route('/products/<int:product_id>', methods=['GET'])
+@store_manager_required
+def seller_single_product_endpoint(product_id):
+    return admin_get_single_product(product_id)
+
+@seller_bp.route('/products/<int:product_id>', methods=['PUT'])
+@store_manager_required
+def seller_update_product_endpoint(product_id):
+    return admin_update_product(product_id)
+
+@seller_bp.route('/products/<int:product_id>/stock', methods=['PATCH'])
+@store_manager_required
+def seller_update_stock_endpoint(product_id):
+    return admin_update_stock(product_id)
+
+@seller_bp.route('/products/<int:product_id>/price', methods=['PATCH'])
+@store_manager_required
+def seller_update_price_endpoint(product_id):
+    return admin_update_price(product_id)
+
+@seller_bp.route('/products/<int:product_id>', methods=['DELETE'])
+@store_manager_required
+def seller_delete_product_endpoint(product_id):
+    return admin_delete_product(product_id)
+

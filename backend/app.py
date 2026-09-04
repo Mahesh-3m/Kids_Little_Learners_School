@@ -21,7 +21,7 @@ from routes.results import results_bp
 from routes.progress import progress_bp
 from routes.parents import parents_bp
 from routes.teacher import teacher_bp
-from routes.store import store_bp
+from routes.store import store_bp, seller_bp
 from database.init_app_db import init_required_tables
 
 def create_app():
@@ -53,6 +53,7 @@ def create_app():
     app.register_blueprint(parents_bp)
     app.register_blueprint(teacher_bp)
     app.register_blueprint(store_bp)
+    app.register_blueprint(seller_bp)
 
     @app.route('/api/health', methods=['GET'])
     def health_check():

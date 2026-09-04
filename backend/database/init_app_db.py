@@ -184,6 +184,22 @@ def init_required_tables():
             if empty_students:
                 print(f"[DB Migration] Populated missing student_id for {len(empty_students)} students.")
 
+        # 7. Seller ID Column Migration in products table
+        cursor.execute("""
+            SELECT COUNT(*) AS cnt 
+            FROM information_schema.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+              AND TABLE_NAME = 'products' 
+              AND COLUMN_NAME = 'seller_id'
+        """)
+        seller_col_res = cursor.fetchone()
+        has_seller_id = (seller_col_res['cnt'] if isinstance(seller_col_res, dict) else seller_col_res[0]) > 0
+
+        if not has_seller_id:
+            cursor.execute("ALTER TABLE products ADD COLUMN seller_id INT NULL DEFAULT 1 AFTER id")
+            cursor.execute("UPDATE products SET seller_id = 1 WHERE seller_id IS NULL")
+            print("[DB Migration] Added seller_id column to products table.")
+
         conn.commit()
     except Exception as e:
         print(f"[DB Warning] Table verification warning: {e}")

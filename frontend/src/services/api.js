@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ?  "https://kids-little-learners-school.onrender.com/api" : "http://127.0.0.1:5000/api");
+const API_URL = import.meta.env.VITE_API_URL || "https://kids-little-learners-school.onrender.com/api";
 
 
 /**
@@ -180,7 +180,11 @@ async function apiRequest(endpoint, options = {}) {
     return data;
   } catch (error) {
     if (error.name === "TypeError" && error.message.includes("fetch")) {
-      throw new Error(`Unable to connect to the server. Please make sure the backend is running at ${API_URL}.`);
+      if (import.meta.env.DEV) {
+        throw new Error(`Unable to connect to the local server. Please make sure the backend is running at ${API_URL}.`);
+      } else {
+        throw new Error("Unable to connect to the server. Please try again in a moment.");
+      }
     }
     throw error;
   }
@@ -574,6 +578,21 @@ export async function adminUpdateStoreDetails(details) {
   });
 }
 
+// ----------------------------------------------------
+// SELLER DASHBOARD API ALIASES (Matching Planned Roles)
+// ----------------------------------------------------
+export const sellerLogin = storeManagerLogin;
+export const sellerLogout = logoutStoreManager;
+export const getSellerProfile = getStoreManagerProfile;
+export const sellerGetStats = adminGetStoreStats;
+export const sellerGetProducts = adminGetProducts;
+export const sellerGetProduct = adminGetProduct;
+export const sellerAddProduct = adminAddProduct;
+export const sellerUpdateProduct = adminUpdateProduct;
+export const sellerUpdateStock = adminUpdateStock;
+export const sellerUpdatePrice = adminUpdatePrice;
+export const sellerDeleteProduct = adminDeleteProduct;
+
 export default {
   getStudents,
   getStudent,
@@ -636,7 +655,7 @@ export default {
   getStoreCategories,
   selectStoreProductForChild,
   getMyToySelections,
-  // Store Manager APIs
+  // Store Manager & Seller APIs
   getStoreToken,
   getStoredStoreManager,
   setStoreAuth,
@@ -657,4 +676,15 @@ export default {
   adminUpdateSelectionStatus,
   getStoreDetails,
   adminUpdateStoreDetails,
+  sellerLogin,
+  sellerLogout,
+  getSellerProfile,
+  sellerGetStats,
+  sellerGetProducts,
+  sellerGetProduct,
+  sellerAddProduct,
+  sellerUpdateProduct,
+  sellerUpdateStock,
+  sellerUpdatePrice,
+  sellerDeleteProduct,
 };

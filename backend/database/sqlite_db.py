@@ -210,6 +210,7 @@ def init_sqlite_db():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS products (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                seller_id INTEGER DEFAULT 1,
                 name TEXT NOT NULL,
                 category TEXT NOT NULL,
                 description TEXT,
@@ -270,6 +271,17 @@ def init_sqlite_db():
         """)
 
         conn.commit()
+
+        # Check if seller_id column exists in products table
+        try:
+            cursor.execute("SELECT seller_id FROM products LIMIT 1")
+        except Exception:
+            try:
+                cursor.execute("ALTER TABLE products ADD COLUMN seller_id INTEGER DEFAULT 1")
+                cursor.execute("UPDATE products SET seller_id = 1 WHERE seller_id IS NULL")
+                conn.commit()
+            except Exception:
+                pass
 
         # Check if database has been seeded
         cursor.execute("SELECT COUNT(*) AS cnt FROM classes")

@@ -2,12 +2,15 @@ from database.db import fetch_all, fetch_one, execute_query
 
 class ProductModel:
     @staticmethod
-    def get_all(category=None, active_only=True):
-        """Fetch products from database with optional category filter."""
+    def get_all(category=None, active_only=True, seller_id=None):
+        """Fetch products from database with optional category and seller filter."""
         query = "SELECT * FROM products WHERE 1=1"
         params = []
         if active_only:
             query += " AND is_active = 1"
+        if seller_id is not None:
+            query += " AND seller_id = %s"
+            params.append(seller_id)
         if category and category.lower() != 'all':
             cat_clean = category.lower().strip()
             if 'dress' in cat_clean:
@@ -31,13 +34,15 @@ class ProductModel:
         return fetch_one(query, (product_id,))
 
     @staticmethod
-    def create(data):
-        """Create a new product in the Kids Store."""
+    def create(data, seller_id=1):
+        """Create a new product in the Kids Store associated with a seller."""
+        actual_seller_id = data.get('seller_id', seller_id) or 1
         query = """
-            INSERT INTO products (name, category, description, price, image_url, stock, is_active)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO products (seller_id, name, category, description, price, image_url, stock, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
         params = (
+            actual_seller_id,
             data.get('name', '').strip(),
             data.get('category', 'General').strip(),
             data.get('description', '').strip(),
