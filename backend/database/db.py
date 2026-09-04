@@ -22,14 +22,14 @@ def get_active_backend():
     if _active_backend is not None:
         return _active_backend
 
-    db_type_env = os.getenv('DB_TYPE', '').strip().lower()
+    db_type_env = getattr(Config, 'DB_TYPE', os.getenv('DB_TYPE', '')).strip().lower()
     if db_type_env == 'sqlite':
         print("[DB] DB_TYPE=sqlite explicitly set. Using embedded SQLite database.")
         init_sqlite_db()
         _active_backend = 'sqlite'
         return _active_backend
 
-    # Try connecting to MySQL with a short timeout
+    # Try connecting to MySQL with a robust timeout
     try:
         test_conn = mysql.connector.connect(
             host=Config.DB_HOST,
@@ -37,15 +37,35 @@ def get_active_backend():
             password=Config.DB_PASSWORD,
             database=Config.DB_NAME,
             port=Config.DB_PORT,
-            connection_timeout=2
+            connection_timeout=5
         )
         test_conn.close()
         print(f"[DB] Connected to MySQL successfully at {Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}")
         _active_backend = 'mysql'
         return _active_backend
     except Exception as err:
-        print(f"[DB] MySQL unavailable at {Config.DB_HOST}:{Config.DB_PORT} ({err}).")
-        print("[DB] Automatically activating embedded SQLite database (little_learners.db) for full functionality...")
+        print(f"[DB Error] Unable to connect to MySQL at {Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME} - User: {Config.DB_USER}")
+        print(f"           Error detail: {err}")
+        if db_type_env == 'mysql':
+            print("[DB] DB_TYPE=mysql is configured. Retrying MySQL connection once...")
+            try:
+                test_conn = mysql.connector.connect(
+                    host=Config.DB_HOST,
+                    user=Config.DB_USER,
+                    password=Config.DB_PASSWORD,
+                    database=Config.DB_NAME,
+                    port=Config.DB_PORT,
+                    connection_timeout=10
+                )
+                test_conn.close()
+                print(f"[DB] Connected to MySQL successfully on retry at {Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}")
+                _active_backend = 'mysql'
+                return _active_backend
+            except Exception as retry_err:
+                print(f"[DB Error] MySQL retry failed: {retry_err}")
+                print("[DB] Falling back to embedded SQLite database (little_learners.db) so server can continue...")
+        else:
+            print("[DB] Automatically activating embedded SQLite database (little_learners.db) for fallback...")
         init_sqlite_db()
         _active_backend = 'sqlite'
         return _active_backend

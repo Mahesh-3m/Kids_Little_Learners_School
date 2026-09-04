@@ -6,7 +6,7 @@ echo ===================================================
 echo.
 
 echo [1/2] Launching Flask Backend Server (Port 5000)...
-start "Little Learners Backend [Port 5000]" cmd /k "cd /d ""%~dp0backend"" && py app.py"
+start "Little Learners Backend [Port 5000]" cmd /k "cd /d ""%~dp0backend"" && (py app.py || python.exe app.py)"
 
 echo [2/2] Launching Vite React Frontend (Port 5173)...
 start "Little Learners Frontend [Port 5173]" cmd /k "cd /d ""%~dp0frontend"" && npm run dev"

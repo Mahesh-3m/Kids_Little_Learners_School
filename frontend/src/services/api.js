@@ -1,4 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL || "https://kids-little-learners-school.onrender.com/api";
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ?  "https://kids-little-learners-school.onrender.com/api" : "http://127.0.0.1:5000/api");
+
 
 /**
  * Storage helpers for parent auth state

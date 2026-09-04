@@ -107,5 +107,6 @@ app = create_app()
 
 if __name__ == '__main__':
     port = Config.FLASK_PORT
-    print(f"[SERVER] Starting Little Learners Backend Server on http://127.0.0.1:{port}")
-    app.run(host='127.0.0.1', port=port, debug=Config.DEBUG)
+    print(f"[SERVER] Starting Little Learners Backend Server on port {port}...")
+    app.run(host='0.0.0.0', port=port, debug=Config.DEBUG)
+
