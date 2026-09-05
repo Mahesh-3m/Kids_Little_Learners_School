@@ -1,8 +1,12 @@
 -- Little Learners Database Schema & Seed Data
 -- Database: little_learners
 
-CREATE DATABASE IF NOT EXISTS little_learners CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE little_learners;
+-- NOTE FOR CLOUD / MANAGED MYSQL HOSTING:
+-- Cloud providers (e.g. TiDB Serverless, Clever Cloud, Aiven) assign a database name and do not permit
+-- CREATE DATABASE. If importing into an assigned cloud database, keep the two lines below commented out.
+-- If setting up a fresh local MySQL database from scratch, you can uncomment them:
+-- CREATE DATABASE IF NOT EXISTS little_learners CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- USE little_learners;
 
 -- 1. Classes Table
 CREATE TABLE IF NOT EXISTS classes (

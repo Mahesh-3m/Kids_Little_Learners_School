@@ -16,29 +16,44 @@ from database.sqlite_db import (
 _active_backend = None
 _pool = None
 
+def _get_mysql_kwargs():
+    """Build MySQL connection parameters including optional SSL configuration."""
+    kwargs = {
+        'host': Config.DB_HOST,
+        'user': Config.DB_USER,
+        'password': Config.DB_PASSWORD,
+        'database': Config.DB_NAME,
+        'port': Config.DB_PORT,
+    }
+    # Optional SSL settings for cloud databases
+    if getattr(Config, 'DB_SSL_DISABLED', False):
+        kwargs['ssl_disabled'] = True
+    else:
+        ssl_ca = getattr(Config, 'DB_SSL_CA', None)
+        if ssl_ca:
+            kwargs['ssl_ca'] = ssl_ca
+        ssl_verify_cert = getattr(Config, 'DB_SSL_VERIFY_CERT', None)
+        if ssl_verify_cert is not None:
+            kwargs['ssl_verify_cert'] = ssl_verify_cert
+    return kwargs
+
 def get_active_backend():
-    """Determine whether to use MySQL or fall back to SQLite."""
+    """Determine whether to use MySQL or SQLite without silent fallback in production."""
     global _active_backend
     if _active_backend is not None:
         return _active_backend
 
-    db_type_env = getattr(Config, 'DB_TYPE', os.getenv('DB_TYPE', '')).strip().lower()
+    db_type_env = getattr(Config, 'DB_TYPE', os.getenv('DB_TYPE', 'mysql')).strip().lower()
     if db_type_env == 'sqlite':
         print("[DB] DB_TYPE=sqlite explicitly set. Using embedded SQLite database.")
         init_sqlite_db()
         _active_backend = 'sqlite'
         return _active_backend
 
-    # Try connecting to MySQL with a robust timeout
+    # Attempt MySQL connection
+    mysql_kwargs = _get_mysql_kwargs()
     try:
-        test_conn = mysql.connector.connect(
-            host=Config.DB_HOST,
-            user=Config.DB_USER,
-            password=Config.DB_PASSWORD,
-            database=Config.DB_NAME,
-            port=Config.DB_PORT,
-            connection_timeout=5
-        )
+        test_conn = mysql.connector.connect(**mysql_kwargs, connection_timeout=5)
         test_conn.close()
         print(f"[DB] Connected to MySQL successfully at {Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}")
         _active_backend = 'mysql'
@@ -47,44 +62,39 @@ def get_active_backend():
         print(f"[DB Error] Unable to connect to MySQL at {Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME} - User: {Config.DB_USER}")
         print(f"           Error detail: {err}")
         if db_type_env == 'mysql':
-            print("[DB] DB_TYPE=mysql is configured. Retrying MySQL connection once...")
+            print("[DB] DB_TYPE=mysql is configured. Retrying MySQL connection once with 10s timeout...")
             try:
-                test_conn = mysql.connector.connect(
-                    host=Config.DB_HOST,
-                    user=Config.DB_USER,
-                    password=Config.DB_PASSWORD,
-                    database=Config.DB_NAME,
-                    port=Config.DB_PORT,
-                    connection_timeout=10
-                )
+                test_conn = mysql.connector.connect(**mysql_kwargs, connection_timeout=10)
                 test_conn.close()
                 print(f"[DB] Connected to MySQL successfully on retry at {Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}")
                 _active_backend = 'mysql'
                 return _active_backend
             except Exception as retry_err:
-                print(f"[DB Error] MySQL retry failed: {retry_err}")
-                print("[DB] Falling back to embedded SQLite database (little_learners.db) so server can continue...")
+                error_msg = (
+                    f"MySQL connection failed to {Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME} (User: {Config.DB_USER}). "
+                    f"DB_TYPE=mysql is configured, so SQLite fallback is disabled in production. "
+                    f"Please verify that DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, and DB_NAME environment variables are set correctly in your Render dashboard and the remote MySQL database is online. "
+                    f"Original error: {retry_err}"
+                )
+                print(f"[DB Error] {error_msg}")
+                raise ConnectionError(error_msg)
         else:
-            print("[DB] Automatically activating embedded SQLite database (little_learners.db) for fallback...")
-        init_sqlite_db()
-        _active_backend = 'sqlite'
-        return _active_backend
+            print("[DB] DB_TYPE is not 'mysql'. Activating embedded SQLite database (little_learners.db) for local fallback...")
+            init_sqlite_db()
+            _active_backend = 'sqlite'
+            return _active_backend
 
 def get_connection_pool():
     global _pool
     if _pool is None:
         try:
-            _pool = pooling.MySQLConnectionPool(
-                pool_name="little_learners_pool",
-                pool_size=10,
-                pool_reset_session=True,
-                host=Config.DB_HOST,
-                user=Config.DB_USER,
-                password=Config.DB_PASSWORD,
-                database=Config.DB_NAME,
-                port=Config.DB_PORT,
-                autocommit=True
-            )
+            pool_kwargs = _get_mysql_kwargs()
+            pool_kwargs['pool_name'] = "little_learners_pool"
+            pool_kwargs['pool_size'] = 5
+            pool_kwargs['pool_reset_session'] = True
+            pool_kwargs['autocommit'] = True
+            pool_kwargs['connection_timeout'] = 10
+            _pool = pooling.MySQLConnectionPool(**pool_kwargs)
             print("MySQL Connection Pool initialized successfully.")
         except mysql.connector.Error as err:
             print(f"Error initializing MySQL connection pool: {err}")
@@ -99,19 +109,20 @@ def get_db_connection():
     pool = get_connection_pool()
     if pool:
         try:
-            return pool.get_connection()
-        except mysql.connector.Error:
+            conn = pool.get_connection()
+            if conn.is_connected():
+                return conn
+            conn.reconnect(attempts=2, delay=1)
+            return conn
+        except mysql.connector.Error as pool_err:
+            print(f"[DB Warning] Pool get_connection failed ({pool_err}), trying direct connection...")
             pass
-            
-    # Direct fallback connection
-    return mysql.connector.connect(
-        host=Config.DB_HOST,
-        user=Config.DB_USER,
-        password=Config.DB_PASSWORD,
-        database=Config.DB_NAME,
-        port=Config.DB_PORT,
-        autocommit=True
-    )
+
+    # Direct connection fallback
+    direct_kwargs = _get_mysql_kwargs()
+    direct_kwargs['autocommit'] = True
+    direct_kwargs['connection_timeout'] = 10
+    return mysql.connector.connect(**direct_kwargs)
 
 def _serialize_row(row_dict):
     """Convert date, datetime, and decimal fields for JSON compatibility."""
