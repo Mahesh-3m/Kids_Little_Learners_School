@@ -4,7 +4,8 @@ from models.student import StudentModel
 
 games_bp = Blueprint('games', __name__, url_prefix='/api/games')
 
-@games_bp.route('', methods=['GET'])
+@games_bp.route('', methods=['GET'], strict_slashes=False)
+@games_bp.route('/', methods=['GET'], strict_slashes=False)
 def get_games():
     try:
         games = GameModel.get_all()

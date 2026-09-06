@@ -1,4 +1,32 @@
-const API_URL = import.meta.env.VITE_API_URL || "https://kids-little-learners-school.onrender.com/api";
+/**
+ * Centralized API Base URL
+ * Development: http://127.0.0.1:5000/api
+ * Production: Configured via VITE_API_URL environment variable
+ */
+export function getBaseApiUrl() {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && envUrl.trim()) {
+    return envUrl.trim().replace(/\/+$/, "");
+  }
+  return import.meta.env.DEV
+    ? "http://127.0.0.1:5000/api"
+    : "https://kids-little-learners-school.onrender.com/api";
+}
+
+export const API_URL = getBaseApiUrl();
+
+/**
+ * Format destination endpoint without accidental double /api/api/...
+ */
+export function formatApiUrl(endpoint = "") {
+  let cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  if (cleanEndpoint.startsWith("/api/")) {
+    cleanEndpoint = cleanEndpoint.substring(4);
+  } else if (cleanEndpoint === "/api") {
+    cleanEndpoint = "";
+  }
+  return `${API_URL}${cleanEndpoint}`;
+}
 
 
 /**
@@ -118,32 +146,43 @@ export function isStoreAuthenticated() {
  * Generic request helper with robust error handling and role-aware token attachment
  */
 async function apiRequest(endpoint, options = {}) {
-  const url = `${API_URL}${endpoint}`;
+  const url = formatApiUrl(endpoint);
   const defaultHeaders = {
     "Content-Type": "application/json",
   };
 
-  // Attach appropriate Bearer token based on destination route if not explicitly set
+  // Attach appropriate Bearer token based on destination route if not explicitly provided
   if (!options.headers || !options.headers["Authorization"]) {
     const teacherToken = getTeacherToken();
     const parentToken = getParentToken();
     const storeToken = getStoreToken();
 
-    if (endpoint.startsWith("/store/admin") || endpoint.startsWith("/store/profile")) {
+    // Clean endpoint to inspect path
+    const cleanPath = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
+    if (cleanPath.startsWith("/store/admin") || cleanPath === "/store/profile") {
       const sToken = storeToken || teacherToken;
       if (sToken) defaultHeaders["Authorization"] = `Bearer ${sToken}`;
-    } else if (endpoint.startsWith("/store/products") || endpoint.startsWith("/store/select") || endpoint.startsWith("/store/my-selections")) {
+    } else if (
+      cleanPath.startsWith("/parent/profile") ||
+      cleanPath.startsWith("/parents/profile") ||
+      cleanPath.startsWith("/parents/children") ||
+      cleanPath.startsWith("/parents/link-child") ||
+      cleanPath.startsWith("/parent/link-child") ||
+      cleanPath.startsWith("/store/products") ||
+      cleanPath.startsWith("/store/select") ||
+      cleanPath.startsWith("/store/my-selections")
+    ) {
       if (parentToken) defaultHeaders["Authorization"] = `Bearer ${parentToken}`;
-    } else if (endpoint.startsWith("/teacher") || endpoint.startsWith("/students")) {
-      const token = teacherToken;
-      if (token) defaultHeaders["Authorization"] = `Bearer ${token}`;
-    } else if (endpoint.startsWith("/parent") || endpoint.startsWith("/parents")) {
-      const token = parentToken;
-      if (token) defaultHeaders["Authorization"] = `Bearer ${token}`;
-    } else {
-      const token = teacherToken || parentToken || storeToken;
-      if (token) defaultHeaders["Authorization"] = `Bearer ${token}`;
+    } else if (
+      cleanPath.startsWith("/teacher/profile") ||
+      cleanPath.startsWith("/teacher/stats") ||
+      cleanPath.startsWith("/students")
+    ) {
+      if (teacherToken) defaultHeaders["Authorization"] = `Bearer ${teacherToken}`;
     }
+    // Public endpoints (/classes, /games, /quiz, /results, /progress, /store/products, /health, /api, etc.)
+    // do not have default tokens attached so they work cleanly unauthenticated.
   }
 
   const config = {
@@ -165,26 +204,70 @@ async function apiRequest(endpoint, options = {}) {
     }
 
     if (!response.ok) {
+      // 404 Route Not Found
+      if (response.status === 404) {
+        const notFoundMsg = (data && data.message) || (data && data.error) || `Requested endpoint not found (404): ${url}`;
+        const error = new Error(notFoundMsg);
+        error.status = 404;
+        error.isNotFound = true;
+        error.data = data;
+        error.url = url;
+        throw error;
+      }
+
+      // 401 / 403 Authentication / Authorization failure
+      if (response.status === 401 || response.status === 403) {
+        const authMsg = (data && data.message) || (data && data.error) || (response.status === 401 ? "Unauthorized. Please log in." : "Forbidden. Access denied.");
+        const error = new Error(authMsg);
+        error.status = response.status;
+        error.isAuthError = true;
+        error.data = data;
+        error.url = url;
+        throw error;
+      }
+
+      // 500+ Internal Server / Database Error
+      if (response.status >= 500) {
+        const rawMsg = (data && data.error && data.message ? `${data.error}: ${data.message}` : null) ||
+                       (data && data.error) ||
+                       (data && data.message) ||
+                       `Internal server error (${response.status}) at ${url}`;
+        const isDbErr = typeof rawMsg === 'string' && /database|mysql|sqlite|connection|connect|access denied/i.test(rawMsg);
+        const error = new Error(isDbErr ? `Database Error: ${rawMsg}` : rawMsg);
+        error.status = response.status;
+        error.isDatabaseError = isDbErr;
+        error.isServerError = true;
+        error.data = data;
+        error.url = url;
+        throw error;
+      }
+
+      // Other non-2xx responses
       const errorMessage =
         (data && data.error && data.message ? `${data.error}: ${data.message}` : null) ||
         (data && data.message) ||
         (data && data.error) ||
-        `Server error: ${response.status} ${response.statusText}`;
+        `Request failed: ${response.status} ${response.statusText}`;
 
       const error = new Error(errorMessage);
       error.status = response.status;
       error.data = data;
+      error.url = url;
       throw error;
     }
 
     return data;
   } catch (error) {
-    if (error.name === "TypeError" && error.message.includes("fetch")) {
-      if (import.meta.env.DEV) {
-        throw new Error(`Unable to connect to the local server. Please make sure the backend is running at ${API_URL}.`);
-      } else {
-        throw new Error("Unable to connect to the server. Please try again in a moment.");
-      }
+    if (error.name === "TypeError" && (error.message.includes("fetch") || error.message.includes("Failed to fetch") || error.message.includes("NetworkError"))) {
+      const netErr = new Error(
+        import.meta.env.DEV
+          ? `Unable to connect to the local server. Please make sure the Flask backend is running at ${API_URL}.`
+          : "Unable to connect to the server. Please check your network connection and try again."
+      );
+      netErr.isNetworkError = true;
+      netErr.status = 0;
+      netErr.url = url;
+      throw netErr;
     }
     throw error;
   }
@@ -579,6 +662,17 @@ export async function adminUpdateStoreDetails(details) {
 }
 
 // ----------------------------------------------------
+// SYSTEM HEALTH & DIAGNOSTICS APIs
+// ----------------------------------------------------
+export async function getApiHealth() {
+  return apiRequest("/health");
+}
+
+export async function getApiRoot() {
+  return apiRequest("/api");
+}
+
+// ----------------------------------------------------
 // SELLER DASHBOARD API ALIASES (Matching Planned Roles)
 // ----------------------------------------------------
 export const sellerLogin = storeManagerLogin;
@@ -616,6 +710,8 @@ export default {
   getProgress,
   updateProgress,
   getAllProgress,
+  getApiHealth,
+  getApiRoot,
   // Teacher APIs
   teacherLogin,
   teacherRegister,

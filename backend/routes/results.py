@@ -4,7 +4,8 @@ from models.student import StudentModel
 
 results_bp = Blueprint('results', __name__, url_prefix='/api/results')
 
-@results_bp.route('', methods=['GET'])
+@results_bp.route('', methods=['GET'], strict_slashes=False)
+@results_bp.route('/', methods=['GET'], strict_slashes=False)
 def get_results():
     try:
         student_id = request.args.get('student_id')

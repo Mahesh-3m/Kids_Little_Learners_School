@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   getClasses,
+  getGames,
+  getQuizzes,
   isTeacherAuthenticated,
   isParentAuthenticated,
-  isStoreAuthenticated
+  isStoreAuthenticated,
+  API_URL
 } from '../services/api';
 
 export default function Home() {
@@ -18,6 +21,7 @@ export default function Home() {
     quizzesCount: 6
   });
   const [loading, setLoading] = useState(true);
+  const [devApiError, setDevApiError] = useState(null);
   const isTeacher = isTeacherAuthenticated();
   const isParent = isParentAuthenticated();
   const isStore = isStoreAuthenticated();
@@ -25,25 +29,57 @@ export default function Home() {
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        const classesData = await getClasses();
-        if (Array.isArray(classesData) && classesData.length > 0) {
-          const nursery = classesData.find(c => c.class_name === 'Nursery')?.student_count || 4;
-          const lkg = classesData.find(c => c.class_name === 'LKG')?.student_count || 4;
-          const ukg = classesData.find(c => c.class_name === 'UKG')?.student_count || 3;
+        const [classesResult, gamesResult, quizzesResult] = await Promise.allSettled([
+          getClasses(),
+          getGames(),
+          getQuizzes()
+        ]);
+
+        let hasError = false;
+        let errorDetails = [];
+
+        let newStats = { ...stats };
+
+        if (classesResult.status === 'fulfilled' && Array.isArray(classesResult.value)) {
+          const classesData = classesResult.value;
+          const nursery = classesData.find(c => c.class_name === 'Nursery')?.student_count || 0;
+          const lkg = classesData.find(c => c.class_name === 'LKG')?.student_count || 0;
+          const ukg = classesData.find(c => c.class_name === 'UKG')?.student_count || 0;
           const total = classesData.reduce((acc, c) => acc + (c.student_count || 0), 0) || (nursery + lkg + ukg);
 
-          setStats({
-            totalStudents: total,
-            nurseryCount: nursery,
-            lkgCount: lkg,
-            ukgCount: ukg,
-            classesCount: classesData.length,
-            gamesCount: 5,
-            quizzesCount: 6
-          });
+          newStats.totalStudents = total;
+          newStats.nurseryCount = nursery;
+          newStats.lkgCount = lkg;
+          newStats.ukgCount = ukg;
+          newStats.classesCount = classesData.length;
+        } else if (classesResult.status === 'rejected') {
+          hasError = true;
+          errorDetails.push(`Classes: ${classesResult.reason?.message || 'Failed to load'}`);
+        }
+
+        if (gamesResult.status === 'fulfilled' && Array.isArray(gamesResult.value)) {
+          newStats.gamesCount = gamesResult.value.length;
+        } else if (gamesResult.status === 'rejected') {
+          hasError = true;
+          errorDetails.push(`Games: ${gamesResult.reason?.message || 'Failed to load'}`);
+        }
+
+        if (quizzesResult.status === 'fulfilled' && Array.isArray(quizzesResult.value)) {
+          newStats.quizzesCount = quizzesResult.value.length;
+        } else if (quizzesResult.status === 'rejected') {
+          hasError = true;
+          errorDetails.push(`Quizzes: ${quizzesResult.reason?.message || 'Failed to load'}`);
+        }
+
+        setStats(newStats);
+
+        if (hasError && import.meta.env.DEV) {
+          setDevApiError(errorDetails.join(' | '));
         }
       } catch (err) {
-        console.warn("Home dashboard loaded with default class structure:", err);
+        if (import.meta.env.DEV) {
+          setDevApiError(err.message || "Failed to connect to backend server");
+        }
       } finally {
         setLoading(false);
       }
@@ -53,6 +89,48 @@ export default function Home() {
 
   return (
     <div className="home-container" style={{ animation: 'fadeIn 0.35s ease-out' }}>
+      {/* Development Diagnostic Banner */}
+      {devApiError && (
+        <div 
+          style={{
+            background: '#fffbeb',
+            border: '2px solid #f59e0b',
+            borderRadius: '12px',
+            padding: '1rem 1.5rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.15)'
+          }}
+        >
+          <div>
+            <strong style={{ color: '#b45309', display: 'block', marginBottom: '0.25rem' }}>
+              ⚠️ Development Mode Diagnostic Notice
+            </strong>
+            <span style={{ color: '#92400e', fontSize: '0.9rem' }}>
+              Backend server issue at <code>{API_URL}</code>: {devApiError}. Please ensure the Flask backend is started (`py app.py`).
+            </span>
+          </div>
+          <button 
+            onClick={() => window.location.reload()}
+            style={{
+              background: '#f59e0b',
+              color: '#fff',
+              border: 'none',
+              padding: '0.45rem 0.9rem',
+              borderRadius: '6px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
+
       {/* Hero Section */}
       <section
         style={{

@@ -3,7 +3,8 @@ from models.class_model import ClassModel
 
 classes_bp = Blueprint('classes', __name__, url_prefix='/api/classes')
 
-@classes_bp.route('', methods=['GET'])
+@classes_bp.route('', methods=['GET'], strict_slashes=False)
+@classes_bp.route('/', methods=['GET'], strict_slashes=False)
 def get_classes():
     try:
         classes_data = ClassModel.get_all()

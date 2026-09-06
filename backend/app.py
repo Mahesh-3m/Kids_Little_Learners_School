@@ -34,14 +34,26 @@ def create_app():
     except Exception as e:
         print(f"[INIT] Table initialization notice: {e}")
 
-    # Enable CORS for React frontend
+    # Enable CORS for React frontend (support localhost:5173, 127.0.0.1:5173, and configured origins)
+    allowed_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+    if hasattr(Config, 'CORS_ORIGIN') and Config.CORS_ORIGIN:
+        for origin in Config.CORS_ORIGIN.split(','):
+            origin_clean = origin.strip()
+            if origin_clean and origin_clean not in allowed_origins:
+                allowed_origins.append(origin_clean)
+
     CORS(app, resources={
         r"/*": {
-            "origins": "*",
+            "origins": allowed_origins if not Config.DEBUG else "*",
             "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"]
         }
-    })
+    }, supports_credentials=True)
 
     # Register Blueprints
     app.register_blueprint(students_bp)
@@ -55,27 +67,51 @@ def create_app():
     app.register_blueprint(store_bp)
     app.register_blueprint(seller_bp)
 
+    @app.route('/api', methods=['GET'])
+    @app.route('/api/', methods=['GET'])
+    def api_root():
+        return jsonify({
+            "status": "ok",
+            "message": "Little Learners API is running",
+            "health": "/api/health",
+            "endpoints": {
+                "students": "/api/students",
+                "classes": "/api/classes",
+                "games": "/api/games",
+                "quiz": "/api/quiz",
+                "results": "/api/results",
+                "progress": "/api/progress"
+            }
+        }), 200
+
     @app.route('/api/health', methods=['GET'])
+    @app.route('/api/health/', methods=['GET'])
     def health_check():
-        from database.db import get_active_backend
+        from database.db import get_active_backend, fetch_one
         try:
             active_db = get_active_backend()
+            # Verify live connectivity
+            ping = fetch_one("SELECT 1 AS ping")
+            db_connected = bool(ping and ping.get('ping') == 1)
+
             return jsonify({
-                "status": "healthy",
+                "status": "healthy" if db_connected else "degraded",
                 "app": "Little Learners API",
                 "version": "1.0.0",
                 "database": {
+                    "connected": db_connected,
                     "type": active_db,
                     "host": Config.DB_HOST if active_db == 'mysql' else 'embedded (sqlite)',
                     "database": Config.DB_NAME if active_db == 'mysql' else 'little_learners.db'
                 }
-            }), 200
+            }), 200 if db_connected else 503
         except Exception as err:
             return jsonify({
                 "status": "unhealthy",
                 "app": "Little Learners API",
                 "version": "1.0.0",
                 "database": {
+                    "connected": False,
                     "type": getattr(Config, 'DB_TYPE', 'mysql'),
                     "host": Config.DB_HOST,
                     "database": Config.DB_NAME,
@@ -88,6 +124,7 @@ def create_app():
         return jsonify({
             "message": "Welcome to Little Learners REST API! 🌈",
             "endpoints": [
+                "/api",
                 "/api/students",
                 "/api/classes",
                 "/api/games",

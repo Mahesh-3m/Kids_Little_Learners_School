@@ -5,7 +5,8 @@ from models.student import StudentModel
 
 quiz_bp = Blueprint('quiz', __name__, url_prefix='/api/quiz')
 
-@quiz_bp.route('', methods=['GET'])
+@quiz_bp.route('', methods=['GET'], strict_slashes=False)
+@quiz_bp.route('/', methods=['GET'], strict_slashes=False)
 def get_quizzes():
     try:
         quizzes = QuizModel.get_all()

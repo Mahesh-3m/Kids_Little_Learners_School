@@ -35,8 +35,10 @@ def update_student_progress(student_id):
     except Exception as e:
         return jsonify({"error": f"Failed to update progress: {str(e)}"}), 500
 
-@progress_bp.route('/summary', methods=['GET'])
-@progress_bp.route('', methods=['GET'])
+@progress_bp.route('/summary', methods=['GET'], strict_slashes=False)
+@progress_bp.route('/summary/', methods=['GET'], strict_slashes=False)
+@progress_bp.route('', methods=['GET'], strict_slashes=False)
+@progress_bp.route('/', methods=['GET'], strict_slashes=False)
 def get_progress_summary():
     try:
         summaries = ProgressModel.get_all_summary()

@@ -13,6 +13,7 @@ export default function Classes() {
   const [loading, setLoading] = useState(true);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [error, setError] = useState(null);
+  const [studentsError, setStudentsError] = useState(null);
 
   useEffect(() => {
     async function loadClasses() {
@@ -38,22 +39,23 @@ export default function Classes() {
     }
   }, [paramClassId]);
 
-  useEffect(() => {
-    if (!selectedClassId) return;
-
-    async function loadStudentsForClass() {
-      setLoadingStudents(true);
-      try {
-        const data = await getClassStudents(selectedClassId);
-        setClassInfo(data.class);
-        setStudents(data.students || []);
-      } catch (err) {
-        console.error("Failed to load class students:", err);
-      } finally {
-        setLoadingStudents(false);
-      }
+  const fetchClassStudents = async (clsId) => {
+    if (!clsId) return;
+    setLoadingStudents(true);
+    setStudentsError(null);
+    try {
+      const data = await getClassStudents(clsId);
+      setClassInfo(data.class);
+      setStudents(data.students || []);
+    } catch (err) {
+      setStudentsError(err.message || 'Failed to load class students');
+    } finally {
+      setLoadingStudents(false);
     }
-    loadStudentsForClass();
+  };
+
+  useEffect(() => {
+    fetchClassStudents(selectedClassId);
   }, [selectedClassId]);
 
   const handleSelectClass = (clsId) => {
@@ -182,6 +184,15 @@ export default function Classes() {
             </Link>
           )}
         </div>
+
+        {studentsError && (
+          <div className="alert alert-error" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>⚠️ {studentsError}</span>
+            <button className="btn btn-outline btn-sm" onClick={() => fetchClassStudents(selectedClassId)}>
+              Retry
+            </button>
+          </div>
+        )}
 
         {loadingStudents ? (
           <div className="spinner-container">

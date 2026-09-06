@@ -25,7 +25,7 @@ class Config:
     DB_HOST = raw_host.strip().replace(' ', '') if raw_host else 'localhost'
     
     DB_USER = os.getenv('DB_USER', 'root').strip() if os.getenv('DB_USER') else 'root'
-    DB_PASSWORD = os.getenv('DB_PASSWORD', 'Mahi@885')
+    DB_PASSWORD = os.getenv('DB_PASSWORD', '')
     DB_NAME = os.getenv('DB_NAME', 'little_learners').strip() if os.getenv('DB_NAME') else 'little_learners'
     
     raw_port = str(os.getenv('DB_PORT', '3306')).strip()

@@ -8,7 +8,8 @@ from routes.auth_middleware import teacher_required
 
 students_bp = Blueprint('students', __name__, url_prefix='/api/students')
 
-@students_bp.route('', methods=['GET'])
+@students_bp.route('', methods=['GET'], strict_slashes=False)
+@students_bp.route('/', methods=['GET'], strict_slashes=False)
 @teacher_required
 def get_students():
     """Get all students (Teacher only)."""
@@ -66,7 +67,8 @@ def get_students_by_class(class_name):
     except Exception as e:
         return jsonify({"error": f"Failed to retrieve students for class {class_name}: {str(e)}"}), 500
 
-@students_bp.route('', methods=['POST'])
+@students_bp.route('', methods=['POST'], strict_slashes=False)
+@students_bp.route('/', methods=['POST'], strict_slashes=False)
 @teacher_required
 def add_student():
     """Enroll a new student (Teacher only)."""
