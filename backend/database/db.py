@@ -70,6 +70,12 @@ def get_active_backend():
                 _active_backend = 'mysql'
                 return _active_backend
             except Exception as retry_err:
+                if Config.FLASK_ENV == 'development':
+                    print(f"[DB Warning] MySQL connection failed ({retry_err}).")
+                    print("[DB Notice] Falling back to embedded SQLite database (little_learners.db) for local development so the Flask backend remains active.")
+                    init_sqlite_db()
+                    _active_backend = 'sqlite'
+                    return _active_backend
                 error_msg = (
                     f"MySQL connection failed to {Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME} (User: {Config.DB_USER}). "
                     f"DB_TYPE=mysql is configured, so SQLite fallback is disabled in production. "

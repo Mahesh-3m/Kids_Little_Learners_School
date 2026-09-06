@@ -1,0 +1,13 @@
+{
+  "name": "kids-little-learners",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Little Learners - Full-Stack Educational & School Management Platform",
+  "scripts": {
+    "start": "start_all.bat",
+    "dev:backend": "cd backend && (py app.py || python.exe app.py)",
+    "dev:frontend": "cd frontend && npm run dev",
+    "backend": "cd backend && (py app.py || python.exe app.py)",
+    "frontend": "cd frontend && npm run dev"
+  }
+}

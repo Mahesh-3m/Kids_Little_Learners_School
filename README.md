@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-# Little_Learners
-The main goal of Little Learners is to provide a simple, colorful, and child-friendly platform where schools can manage student information and learning activities while parents can conveniently track their children's educational activities and progress.
-=======
 # 🌈 LITTLE LEARNERS — Full-Stack Educational & School Management Platform
 
 **Learn • Play • Grow** ✨
@@ -233,8 +228,5 @@ Kids_Little_Learners/
 - **Backend Connection Error**: Ensure the Flask server is running on `http://127.0.0.1:5000` and MySQL service is active.
 - **MySQL Access Denied**: Verify credentials in `backend/.env` match your MySQL root user password.
 - **CORS Issue**: Flask is pre-configured with Flask-CORS to accept requests from `http://localhost:5173`.
->>>>>>> 6315d93 (Initial commit: Little Learners - Full-stack educational platform)
-=======
-# Kids_Little_Learners
-The main goal of Little Learners is to provide a simple, colorful, and child-friendly platform where schools can manage student information and learning activities while parents can conveniently track their children's educational activities and progress.
->>>>>>> f54329e52769043b6dde5022914ae1b0f61b00ac
+- **Windows Command**: On Windows, use `py app.py` or `python.exe app.py` (not `python app.py` if Cygwin is installed).
+
